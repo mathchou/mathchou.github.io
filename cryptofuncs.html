@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+<head>
+	<title>WIP</title>
+	<link rel='stylesheet' href='math150_style.css'>
+    <script type="text/javascript" src="./funcs.txt"></script>
+
+    
+</head>
+
+<body>
+
+    <div class='header'>
+        <br>MATH 150 FUNCTION WEBSITE
+    </div>
+    
+    
+
+    <div class='temp' id='thisone'>
+    
+    </div>
+    
+    
+    <div class='main-left'>
+    
+    <div class='left-top'>
+        <div id='choose_opt' class='options'>
+        <select id='choose_func' class='function_dropdown' onchange="choose_alg(this)">
+            <option value="default">Choose Function...
+            <option value="gcd">GCD
+            <option value="inverse">Inverse
+            <option value="fastpow">Fast-Powering
+            <option value="shanks">Shank's Babystep-Giantstep
+            <option value="DLPorderqe">Solve DLP with order of prime power
+            <option value="pohlig_hellman">Pohlig-Hellman
+            <option value="pollard_factor">Pollard's Factorization
+            <option value="rsa_enc">Encrypt with RSA
+            <option value="rsa_dec">Decrypt with RSA
+
+
+        </select>
+        
+        <button class='calc' onclick='calculate()'>Calculate </button>
+        
+        <input type="checkbox" id="expl_checkbox" class="mycheck" value="False"> Show Explanations<br>
+        
+        <div id='info_box' class="info">
+            <br>
+            <br>
+            INFO: 
+        </div>
+        </div>
+        
+        
+        
+        
+        <div class='inputs'>
+            <div id='argdiv1' class='oneinput'>A=<input type="number" id='arg1' class="myNumber" value=2>
+            </div>
+            <div id='argdiv2' class='oneinput'>B=<input type="number" id='arg2' class="myNumber" value=2>
+            </div>
+            <div id='argdiv3' class='oneinput'>C=<input type="number" id='arg3' class="myNumber" value=2>
+            </div>
+            <div id='argdiv4' class='oneinput'>D=<input type="number" id='arg4' class="myNumber" value=2>
+            </div>
+            <div id='argdiv5' class='oneinput'>E=<input type="number" id='arg5' class="myNumber" value=2>
+            </div>
+            <div id='argdiv6' class='oneinput'>F=<input type="number" id='arg6' class="myNumber" value=2>
+            </div>
+
+        </div>
+        
+    </div>
+    
+    <div id='result_box' class='left-bot'>
+        <br><br>
+        RESULT:
+        
+    </div>
+    </div>
+    
+    <div class='main-right' id='Explanations'>
+    
+    
+    </div>
+    
+    </div>
+
+</body>
+</html>

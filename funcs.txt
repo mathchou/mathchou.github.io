@@ -1,0 +1,537 @@
+
+function testing(a, b)
+{
+        var my_obj = gcd(a, b);
+        document.getElementById("thisone").innerHTML = my_obj.gcd;
+        
+        var div = document.getElementById("argdiv5");
+        
+        if (div.style.display == "none") {
+                div.style.display = "block";
+        } else {
+                div.style.display = "none";
+        }
+                
+}
+
+
+function choose_alg(select)
+{
+        var func = select.value;
+        
+        
+        var divs = [];
+        divs.push(document.getElementById("argdiv1"));
+        divs.push(document.getElementById("argdiv2"));
+        divs.push(document.getElementById("argdiv3"));
+        divs.push(document.getElementById("argdiv4"));
+        divs.push(document.getElementById("argdiv5"));
+        divs.push(document.getElementById("argdiv6"));
+
+        var num_args = {gcd: 2, inverse: 2, fastpow: 3, shanks: 3, DLPorderqe: 6, pohlig_hellman: 3, 
+                        pollard_factor: 2, rsa_enc: 3, rsa_dec: 3};
+        var var_names = {gcd: ["a", 'b'], inverse: ['x', 'p'],
+                         fastpow: ['g', 'a', 'p'], shanks: ['g', 'h', 'p'],
+                         DLPorderqe: ['p', 'N', 'g', 'h', 'q', 'e'],
+                         pohlig_hellman: ['g', 'h', 'p'], 
+                         pollard_factor: ['N', 'k'],
+                         rsa_enc: ['N', 'e', 'm'], 
+                         rsa_dec: ['N', 'c', 'd']};
+        var infos = {gcd: "returns gcd(a, b)", 
+                     inverse: "returns x^{-1} (mod p)",
+                     fastpow: "returns g^a (mod p)",
+                     shanks: "returns x from the equation g^x = h (mod p)",
+                     DLPorderqe: "returns x from g^{N/(q^e)} = h (mod p)",
+                     pohlig_hellman: "returns x from the equation g^x = h (mod p)",
+                     pollard_factor: "returns a factor d of n if found; goes up to 2^{k!} - 1",
+                     rsa_enc: "returns ciphertext c with public key (N, e) with m^e (mod N)",
+                     rsa_dec: "returns plaintext m with private key d with c^d (mod N)"};
+                         
+        for (var i = 0; i < num_args[func]; i++)
+        {
+            divs[i].style.display = "block";
+            divs[i].innerHTML = var_names[func][i] + divs[i].innerHTML.substring(divs[i].innerHTML.indexOf("="), divs[i].innerHTML.length);
+        }
+        for (var i = num_args[func]; i < 6; i++)
+        {
+            divs[i].style.display = "none";
+        }
+        
+        var curr_info = document.getElementById("info_box").innerHTML;
+        var first_part = curr_info.substring(0, curr_info.indexOf("INFO:"));
+        document.getElementById("info_box").innerHTML = first_part
+                                                        + "INFO: <br><br>" 
+                                                        + infos[func];
+        
+        
+
+}
+
+function calculate()
+{       
+        var func = document.getElementById("choose_func").value;
+        document.getElementById("Explanations").innerHTML = "<h2>Show Your Work:<h2>";
+        var mycheckbox = document.getElementById("expl_checkbox");
+        var show_expl;
+        if (mycheckbox.checked) {
+            show_expl = true;
+        } else {
+            show_expl = false;
+        }
+        
+        var result;
+        var variable = "";
+        
+        var arg1 = parseInt(document.getElementById("arg1").value);
+        var arg2 = parseInt(document.getElementById("arg2").value);
+        var arg3 = parseInt(document.getElementById("arg3").value);
+        var arg4 = parseInt(document.getElementById("arg4").value);
+        var arg5 = parseInt(document.getElementById("arg5").value);
+        var arg6 = parseInt(document.getElementById("arg6").value);
+        
+        console.log("Calling Func; Args:", arg1, arg2, arg3, arg4, arg5, arg6, show_expl);
+        if (func == "gcd") {
+                var temp_result = gcd(arg1, arg2, show_expl);
+                result = temp_result.gcd;
+                variable = "GCD(" + arg1 + ", " + arg2 + ") = "; 
+        } else if (func == "inverse") {
+                result = get_inv(arg1, arg2, show_expl);
+                variable = arg1 + "^{-1} (mod " + arg2 + ") = "; 
+        } else if (func == "fastpow") {
+                result = fast_pow(arg1, arg2, arg3, show_expl);
+                variable = arg1 + "^" + arg2 + " (mod " + arg3 + ") = "; 
+        } else if (func == "shanks") {
+                result = babystep_giantstep(arg1, arg2, arg3, show_expl);
+                variable = "x = ";
+        } else if (func == "DLPorderqe") {
+                result = DLP_with_order_qe(arg1, arg2, arg3, arg4, arg5, arg6, show_expl);
+                variable = "x = ";
+        } else if (func == "pohlig_hellman") {
+                result = pohlig_hellman(arg1, arg2, arg3, show_expl);
+                variable = "x = ";
+        } else if (func == "pollard_factor") {
+                result = pollard_factor(arg1, arg2, show_expl);
+                variable = "d = ";
+        } else if (func == "rsa_enc") {
+                result = RSA_encrypt(arg1, arg2, arg3, show_expl);
+                variable = "c = ";
+        } else if (func == "rsa_dec") {
+                result = RSA_decrypt(arg1, arg2, arg3, show_expl);
+                variable = "m = ";
+        }
+        
+        document.getElementById("result_box").innerHTML = "<br><br>RESULT:<br><br>" + variable + result;
+}
+
+
+
+/* used instead of the built-in mod function because the built-in
+ * returns a negative number from [-n + 1, 0] if the first operand is negative.  
+ */
+function mod(n, m) {
+        //if (n < m && 
+    
+        return ((n % m) + m) % m;
+}
+
+
+/* Returns the gcd of the given inputs
+ * uses Euclidean Algorithm (runtime O(logn))
+ * Must be positive integer inputs
+ */
+function gcd(a, b, explain)
+{
+    
+        if (a < b) {
+                var temp = a; 
+                a = b;
+                b = temp;
+            }
+
+        var remainder = mod(a, b);
+        var quotient = Math.floor(a / b);
+        var rems = [];
+        var quots = [];
+
+        while (remainder != 0) {
+                if (explain) {
+                        console.log("hi");
+                        var message = a + " = " + b + " * " + Math.floor(a / b) + " + " + remainder;
+                        document.getElementById("Explanations").innerHTML += message + "<br>";
+                }
+                rems.push(remainder);
+                quots.push(Math.floor(a / b));
+                a = b;
+                b = remainder;
+                remainder = mod(a, b);
+        }
+        
+        if (explain) {
+                console.log("hi");
+                var message = a + " = " + b + " * " + Math.floor(a / b) + " + " + remainder;
+                document.getElementById("Explanations").innerHTML += message + "<br>";
+        }
+        
+        
+        return {gcd: b, rems: rems, quots: quots};
+}
+
+/*Returns u and v such that ua + vb = gcd(a, b)
+ * Uses Extended Euclidean Algorithm, by first using Euc. Alg as 
+ *      implemented in gcd function.  
+ */
+function ext_alg(a, b, explain)
+{
+        a = parseInt(a);
+        b = parseInt(b);
+        // Force a to be smaller than b.
+        if (a > b) {
+                var temp2 = a; 
+                a = b;
+                b = temp2;
+        }
+        var my_obj = gcd(b, a, false);
+        var my_gcd = my_obj.gcd;
+        var rems = my_obj.rems;
+        var quots = my_obj.quots;
+        
+        rems.reverse();
+        quots.reverse();
+        rems.push(a);
+        rems.push(b);
+        
+        var u = 0;
+        var v = 1;
+        var big = rems[1];
+        var small = 0;
+        
+        var i = 0;
+        while (i < quots.length) {
+                var temp = v;
+                v = u - (v * quots[i]);
+                u = temp;
+                small = big;
+                big = rems[i + 2];
+                
+                if (explain) {
+                        var message = my_gcd + " = " + big + " * " + a + " + " + small + " * " + b;
+                        document.getElementById("Explanations").innerHTML += message + "<br>";
+                }
+                    
+                i += 1;
+        }
+        
+        return {u: u, v: v};
+}
+
+/* Returns the inverse of x (MOD modulo)
+ * Takes 2 integers as inputs. 
+ * If the inverse does not exist (gcd != 1), returns -1
+ */
+function get_inv(x, modulo, explain) 
+{
+        var my_obj = gcd(x, modulo, false);
+        var my_gcd = my_obj.gcd;
+        if (my_gcd != 1) {
+                return -1;
+        }
+        var temp_obj = ext_alg(x, modulo, explain);
+        var output = temp_obj.v;
+        if (output < 0) {
+                output = output + modulo;
+        }
+        return output;
+}
+
+/* Returns base^(exp) % modulo
+ * Takes 3 integers as inputs, must be exp >= 0; base > 0; modulo > 0
+ */
+function fast_pow(base, exp, modulo, explain)
+{
+        if (exp == 0) {
+                return 1;
+        }
+        var size = Math.floor(Math.log2(exp)) + 1;
+        var pow2 = 1;
+        var powx = base;
+        var product = 1;
+        
+        if (explain) {
+                var message = exp + " = " + exp.toString(2);
+                document.getElementById("Explanations").innerHTML += message + "<br>";
+        }
+        
+        for (i = 0; i < size; i++) { 
+                if (mod(exp, (pow2 * 2)) >= pow2) {
+                        product = mod((product * powx), modulo);
+                }
+                if (explain) {
+                        var message = base + " ^ (2 ^ " + i + ") = " + powx;
+                        document.getElementById("Explanations").innerHTML += message + "<br>";
+                }
+                pow2 *= 2;
+                powx = mod(Math.pow(powx, 2), modulo);
+        }
+
+        return product;
+}
+
+/*Returns the order of base (mod p)
+ * Takes 2 integers as input, both >= 0.
+ */
+function order_mod_p(base, p)
+{
+        var i = 1;
+        var since_last = 0;
+        var curr = base;
+        var n;
+        
+        while (i < p) {
+                if (mod((p - 1), i) == 0) {
+                        n = fast_pow(base, since_last, p, false);
+                        curr = mod((curr * n), p);
+                        since_last = 0;
+                        if (curr == 1) {
+                                return i;
+                        }
+                }
+                i += 1;
+                since_last += 1;
+        }
+        return p-1;
+}
+
+/* Solves the DLP of the form base^x = arg (mod modulo)
+ * Takes 3 integers, must be positive, must be arg < modulo
+ * Returns x to solve the DLP
+ * Uses: order_mod_p, get_inv, and fast_pow
+ */
+function babystep_giantstep(base, arg, modulo, explain)
+{
+        var arr1 = [];
+        var arr2 = [];
+        
+        var order = order_mod_p(base, modulo);
+        var inv = get_inv(base, modulo, false);
+        
+        var message1 = "L1: ";
+        var message2 = "L2: ";
+        var message3 = "";
+        
+        var n = 1 + Math.floor(Math.sqrt(order));
+        for (var i = 0; i < (n + 1); i++) {
+                arr1.push(fast_pow(base, i, modulo, false));
+                arr2.push(mod(arg * fast_pow(inv, i * n, modulo, false), modulo));
+        }
+                
+                
+        if (explain) {
+                for (var i = 0; i < arr1.length; i++) {
+                        message1 += arr1[i] + ", ";
+                }
+                for (var i = 0; i < arr2.length; i++) {
+                        message2 += arr2[i] + ", ";
+                }
+                
+                document.getElementById("Explanations").innerHTML += message1 + "<br>";
+                document.getElementById("Explanations").innerHTML += message2 + "<br>";
+        }
+        
+                
+                
+        var x = 0;
+        for (var i = 0; i < arr1.length; i++) {
+                for (var j = 0; j < arr2.length; j++) {
+                        if (arr1[i] == arr2[j]) {
+                                x = arr1[i];
+                                
+                        }
+                }
+        }
+
+        return arr1.indexOf(x) + arr2.indexOf(x) * n;
+}
+
+/* Returns 2 arrays with the bases or exponents of the factors of the input name
+ * Returns arrays in the form [q1, q2,... qt] and [e1, e2, ... et]
+ *  The input n = q1^e1 * q2^e2 ... * qt^et, and all qi are primes
+ */
+function factor(n)
+{
+        var bases = [];
+        var exps = [];
+        var i = 2;
+        while (i <= n)
+        {
+                var ctr = 0;
+                while (mod(n, i) == 0) {
+                        ctr += 1;
+                        n = n / i;
+                }
+                if (ctr != 0) {
+                        bases.push(i);
+                        exps.push(ctr);
+                }
+                i += 1;
+        }
+        return {bases: bases, exps: exps};
+}
+
+/* solves the DLP q^x = h (mod p)
+ * uses the method shown in Example 2.35
+ * used by Pohlig-Hellman; uses fast_pow and get_inv
+ */
+function DLP_with_order_qe(p, N, g, h, q, e, explain)
+{
+        var my_g = fast_pow(g, (N / Math.pow(q, e)), p, false);
+        var my_h = fast_pow(h, (N / Math.pow(q, e)), p, false);
+        
+        var x = 0;
+        var e_curr = e - 1;
+        var g_curr = fast_pow(my_g, Math.pow(q, e - 1), p, false);
+        var x_curr;
+        var message2 = "x = ";
+        
+        while (e_curr >= 0)
+        {
+                h_curr = mod((my_h * get_inv( fast_pow(my_g, x, p, false), p, false) ), p);
+                h_curr = fast_pow(h_curr, Math.pow(q, e_curr), p, false);
+                
+                x_curr = mod(babystep_giantstep(g_curr, h_curr, p, false), q);
+                x += x_curr * (Math.pow(q, (e - e_curr - 1)));
+                
+                if (explain) {
+                        var message = g_curr + "^x = " + h_curr + "; x_" + (e - e_curr - 1) + " = " + x_curr;
+                        message2 += x_curr + " * " + q + "^" + (e - e_curr - 1) + " + ";
+                        document.getElementById("Explanations").innerHTML += message + "<br>";
+                }
+                
+                e_curr -= 1;
+        }
+        
+        if (explain) {
+                message2 = message2.substring(0, message2.length - 2);
+                message2 += " = " + x;
+                document.getElementById("Explanations").innerHTML += message2 + "<br>";
+        }   
+                
+        return x;
+}
+
+/* Returns the value x (mod m1 * m2) that satisfies both congruences:
+ *      x = x1 (mod m1) and x = x2 (mod m2)
+ * uses get_inv
+ * Requires positive integer input
+ */
+function CRT_solve2(x1, m1, x2, m2)
+{
+        var m1_inv = get_inv(mod(m1, m2), m2, false);
+                
+        var y = mod(( (x2 - x1) * (m1_inv) ),m2);
+        return mod((x1 + (m1 * y)),  (m1 * m2));
+}
+
+/* Returns the value that satisfies the congrunces
+ *      x = args[0] (mod bases[0]^exps[0])
+ * Uses CRT_solve2 to solve this one by one
+ * Requires arrays of integers as the three inputs, each of the same length
+ */
+function CRT(bases, exps, args)
+{
+        var curr_x = args[0];   
+        var curr_mod = Math.pow(bases[0], exps[0]);
+        
+        for (var i = 1; i < bases.length; i++) {
+                curr_x = CRT_solve2(curr_x, curr_mod, args[i], (Math.pow(bases[i], exps[i])));
+                curr_mod = curr_mod * (Math.pow(bases[i], exps[i]));
+        }
+        
+        return mod(curr_x, curr_mod);
+}
+
+/* Solve the DLP using the Pohlig-Hellman Algorithm g^x = h (mod p)
+ * Uses many of the above functions as helpers
+ * takes integers as inputs.
+ */
+function pohlig_hellman(g, h, p, explain)
+{
+        var N = order_mod_p(g, p);
+        var my_obj = factor(N);
+        var bases = my_obj.bases;
+        var exps = my_obj.exps;
+        var args_ray = [];
+        
+        for (var i = 0; i < bases.length; i++) {
+                args_ray.push(DLP_with_order_qe(p, N, g, h, bases[i], exps[i], false));
+                if (explain) {
+                        var message = "x = " + args_ray[args_ray.length - 1] + " (mod " + bases[i] + "^" + exps[i] + ")";
+                        document.getElementById("Explanations").innerHTML += message + "<br>";
+                }
+        }
+        
+        
+        for (var i = 0; i < bases.length; i++) {
+                console.log("q =", bases[i], ", e = ", exps[i], ", x =", args_ray[i]);
+        }
+                
+        var x = CRT(bases, exps, args_ray);
+        return x;
+}
+
+/* Performs Pollard's Factorization Algorithm to find a factor of N.
+ * If one is found, returns it. 
+ * Takes 2 ints as input, N and k.  N is the number to be attempted to factor.  
+ * k will change how far it will search; i.e. it will search up to gcd(2^k! - 1, N)
+ */
+function pollard_factor(N, k, explain)
+{
+        var a = 2
+
+        for (var j = a; j < k + 1; j++) {
+                a = fast_pow(a, j, N, false);
+                var my_obj = gcd(a - 1, N, false);
+                var d = my_obj.gcd;
+                
+                if (explain) {
+                        var message = "gcd(2^{" + j + "!} - 1, " + N + ") = " + d;
+                        document.getElementById("Explanations").innerHTML += message + "<br>";
+                }
+                    
+                if ((d > 1) && (d < N)) {
+                        //print("2 ^ ", j, "! - 1 =", a-1);
+                        //print("gcd(2 ^", j, "!  - 1,", N, "=", d);
+                        return d;
+                }
+        }
+}
+
+/* implements pollard's rho algorithm to factor numbers probabalistically
+ * Takes as input
+ * Returns
+ */
+function pollards_rho(N, k, explain)
+{
+    
+}
+
+
+/* Encrypts with RSA, 
+ * takes 3 ints, N=pq, message m, public key e
+ * returns m^e (mod m)
+ */
+function RSA_encrypt(N, e, m)
+{
+        var ciphertext = fast_pow(m, e, N);
+        return ciphertext;
+}
+
+/* Decrypts with RSA, 
+ * takes 3 ints, N=pq, ciphertext c, private key d
+ * returns c^d (mod m)
+ */
+function RSA_decrypt(N, c, d)
+{
+        var plaintext = fast_pow(c, d, N);
+        return plaintext;
+}
+
