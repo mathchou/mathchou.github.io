@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send Choucoin</title>
+    <!-- Link to the external CSS file -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Send Choucoin</h1>
+
+
+
+    <!-- Form to input transaction details -->
+    <div>
+        <label for="sender">Sender ID:</label>
+        <input type="text" id="sender" required><br><br>
+
+        <label for="receiver">Receiver ID:</label>
+        <input type="text" id="receiver" required><br><br>
+
+        <label for="amount">Amount:</label>
+        <input type="text" id="amount" required><br><br>
+
+        <label for="comment">Comment:</label>
+        <input type="text" id="comment" required><br><br>
+		
+		<!-- File input for uploading the private key file -->
+		<label for="fileInput">User ID and keys file:</label>
+        <input type="file" id="fileInput" accept=".txt">
+    
+
+        <!-- Button to generate transaction after loading the keys -->
+        <button onclick="generateTransaction()">Generate Transaction</button>
+    </div>
+
+    <!-- Scrollable output box with copy button inside -->
+    <div id="resultContainer">
+        <button id="copyButton" class="visible" onclick="copyToClipboard()">Copy</button>
+        <pre id="resultText"></pre>
+    </div>
+
+	
+    <script src="script.js"></script>
+	
+</body>
+</html>
