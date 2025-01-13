@@ -1,0 +1,58 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin-top: 20px;  /* Reduced margin from top */
+}
+
+#container {
+    display: flex;
+    justify-content: space-around;  /* Even space between columns */
+    margin-top: 20px;
+    gap: 10px;  /* Reduced gap between columns */
+    flex-wrap: wrap;  /* Allow wrapping for smaller screens */
+}
+
+.key-box {
+    margin: 5px;  /* Reduced margin between boxes */
+    padding: 10px;  /* Reduced padding inside the boxes */
+    border: 1px solid #ccc;
+    width: 230px;  /* Reduced width of the boxes */
+    word-wrap: break-word;
+    box-sizing: border-box;  /* Ensures padding is included in the width */
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-basis: 32%; /* Slightly reduced width for each column */
+}
+
+.download-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-basis: 32%;
+    margin-top: 20px;
+}
+
+button {
+    padding: 8px 16px;  /* Slightly smaller button */
+    font-size: 14px;  /* Slightly smaller font size */
+    cursor: pointer;
+}
+
+h1 {
+    margin-bottom: 15px;  /* Reduced margin below the header */
+    font-size: 24px;  /* Slightly smaller font size */
+}
+
+a {
+    text-decoration: none;
+    color: #fff;
+    background-color: #4CAF50;
+    padding: 8px 16px;  /* Reduced padding */
+    border-radius: 5px;
+    font-size: 14px;  /* Slightly smaller font size */
+}
