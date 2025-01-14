@@ -210,10 +210,10 @@ async function generateTransaction() {
     }
 
     // Get the current date and time
-    const datetime = new Date().toISOString();
+    const datetime = new Date().toISOString().slice(0, 19);
 
     // Concatenate values to create the input string for hashing
-    const hashInput = `${datetime}:${sender}:${amount}:${receiver}`;
+    const hashInput = `${sender} sends ${amount} Choucoin to ${receiver} for ${comment} on ${datetime}`;
 
     // Generate a hash of the concatenated values (using SHA-256)
     const hash = await generateHash(hashInput);

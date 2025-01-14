@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anonymous Posts</title>
+    <style>
+        /* Add your styles here */
+    </style>
+</head>
+<body>
+
+    <h1>Leave an Anonymous Post</h1>
+
+    <!-- Form to submit a post -->
+    <div id="postForm">
+        <textarea id="postContent" placeholder="Write your post here..."></textarea><br>
+        <button onclick="submitPost()">Submit Post</button>
+    </div>
+
+    <!-- Section to display the posts -->
+    <div id="posts">
+        <h2>Recent Posts</h2>
+        <div id="postsList"></div>
+    </div>
+
+    <script>
+        const backendURL = 'https://choucoin-bddda46dc8c1.herokuapp.com/'; // Replace with your backend URL
+
+        // Load posts from the backend
+        async function loadPosts() {
+            const response = await fetch(`${backendURL}/posts`);
+            const posts = await response.json();
+
+            const postsList = document.getElementById('postsList');
+            postsList.innerHTML = '';  // Clear current posts
+
+            posts.forEach(post => {
+                const postDiv = document.createElement('div');
+                postDiv.classList.add('post');
+                postDiv.innerHTML = `
+                    <p>${post.content}</p>
+                    <div class="timestamp">Posted on: ${new Date(post.timestamp).toLocaleString()}</div>
+                `;
+                postsList.appendChild(postDiv);
+            });
+        }
+
+        // Submit a new post
+        async function submitPost() {
+            const postContent = document.getElementById('postContent').value.trim();
+
+            if (postContent === '') {
+                alert('Please write something before submitting.');
+                return;
+            }
+
+            // Send the post content to the backend
+            const response = await fetch(`${backendURL}/posts`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ content: postContent })
+            });
+
+            if (response.ok) {
+                // Reload posts after successful submission
+                loadPosts();
+                document.getElementById('postContent').value = '';  // Clear the textarea
+            } else {
+                alert('Failed to submit post.');
+            }
+        }
+
+        // Initial load of posts
+        window.onload = loadPosts;
+    </script>
+
+</body>
+</html>

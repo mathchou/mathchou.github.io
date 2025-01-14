@@ -42,16 +42,9 @@ All transactions should be posted on the class Canvas discussion board.
 
 You may make posts under a name there, but note that anyone can choose any name, so a transaction should not be trusted simply by name alone!
 
-Here is an example of how to give Choucoin (CC) via the message board:
+Alice bought an item from Bob for 3 Choucoin. The person who is _giving_ the Choucoin needs to go post the transaction. Alice will navigate to the [transaction tool](./send-choucoin.html). This will generate a text message that is signed by uploading her personal key file.
 
-Alice bought an item from Bob for 3 Choucoin. The person who is _giving_ the Choucoin needs to go post the transaction. Alice first needs to create the message which will include the time of the transaction. Her message first begins like:
-
-> TIME: 9/7/24, 14:25:14, Alice gives 3 Choucoin to Bob.
-
-Alice must digitally sign this message in order for us to believe it is her posting this message. To do this, we use the function ``RSAsign()'' found here: [Choucoin&copy; Tools](./choucoin.html). Input your transaction message, public key parameter **N**, and your secret key parameter **d**. This will output your _signed_ message, which will look something like:
-
-> TIME: 9/7/24, 14:25:14, Alice gives 3 Choucoin to Bob.\
-> SIGNED: 840321623094276238432491823948267132432983240
+> Alice sends 3 Choucoin to Bob for cookies on 2025-01-14T18:15:00, signed: 26010574517299467705133524531951449443160637616806667514746447492490615128182
 
 This text output is the actual message we want to post to the transaction forum.
 
@@ -77,6 +70,6 @@ Text can be **bold**, _italic_, or ~~strikethrough~~.
 # Choucoin&copy; tools
 
 [Crypto Functions](./cryptofuncs.html).
-[Choucoin&copy; Tools](./choucoin.html
-
+[Choucoin&copy; Tools](./choucoin.html).
+[Choucoin transactions](./posts.html).
 
