@@ -70,6 +70,8 @@ Text can be **bold**, _italic_, or ~~strikethrough~~.
 # Choucoin&copy; tools
 
 [Crypto Functions](./cryptofuncs.html).
+
 [Choucoin&copy; Tools](./choucoin.html).
+
 [Choucoin transactions](./posts.html).
 
