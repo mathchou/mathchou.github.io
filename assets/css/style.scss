@@ -5,7 +5,7 @@
     @import "{{ site.theme }}";
     ```
 
-#container {
+#xcontainer {
     display: flex;
     justify-content: space-around;  /* Even space between columns */
     margin-top: 20px;
@@ -13,7 +13,7 @@
     flex-wrap: wrap;  /* Allow wrapping for smaller screens */
 }
 
-.key-box {
+.xkey-box {
     margin: 5px;  /* Reduced margin between boxes */
     padding: 10px;  /* Reduced padding inside the boxes */
     border: 1px solid #ccc;
@@ -22,14 +22,14 @@
     box-sizing: border-box;  /* Ensures padding is included in the width */
 }
 
-.column {
+.xcolumn {
     display: flex;
     flex-direction: column;
     align-items: center;
     flex-basis: 32%; /* Slightly reduced width for each column */
 }
 
-.download-column {
+.xdownload-column {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -58,7 +58,7 @@ a {
     font-size: 14px;  /* Slightly smaller font size */
 }
 /* Style for the result container */
-#resultContainer {
+#xresultContainer {
 	position: relative; /* Positioning context for the button */
 	width: 50%;  /* Make the result box half the screen width */
 	height: 200px;  /* Fixed height */
@@ -72,7 +72,7 @@ a {
 }
 
 /* Style for the copy button */
-#copyButton {
+#xcopyButton {
 	position: absolute;
 	top: 10px;
 	right: 10px;
@@ -89,17 +89,17 @@ a {
 }
 
 /* Button hover effect */
-#copyButton:hover {
+#xcopyButton:hover {
 	background-color: #e64a19;
 }
 
 /* Make the text area within the box more readable */
-#resultText {
+#xresultText {
 	white-space: pre-wrap;  /* Keeps text formatting */
 	word-wrap: break-word;
 }
 
 /* To ensure the copy button is visible */
-#copyButton.visible {
+#xcopyButton.visible {
 	display: block !important;
 }
