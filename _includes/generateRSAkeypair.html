@@ -8,34 +8,34 @@
     <h1>Generate an ID and key pair</h1>
     <button onclick="generatePrimesAndRSA()">Generate Primes and RSA Keys</button>
 
-    <div id="container">
+    <div id="xcontainer">
         <!-- Left Column for Modulus N and Encryption Exponent e -->
-        <div class="column">
+        <div class="xcolumn">
             <h2>Public Key Data</h2>
-            <div id="NBox" class="key-box">
+            <div id="NBox" class="xkey-box">
                 <strong>Modulus N = </strong><span id="NValue">Waiting for N...</span>
             </div>
-            <div id="eBox" class="key-box">
+            <div id="eBox" class="xkey-box">
                 <strong>Encryption exponent e = </strong><span id="eValue">Waiting for e...</span>
             </div>
         </div>
 
         <!-- Right Column for Primes p, q, and Decryption Exponent d -->
-        <div class="column">
+        <div class="xcolumn">
             <h2>Private Key Data</h2>
-            <div id="pBox" class="key-box">
+            <div id="pBox" class="xkey-box">
                 <strong>p = </strong><span id="pValue">Waiting for prime...</span>
             </div>
-            <div id="qBox" class="key-box">
+            <div id="qBox" class="xkey-box">
                 <strong>q = </strong><span id="qValue">Waiting for prime...</span>
             </div>
-            <div id="dBox" class="key-box">
+            <div id="dBox" class="xkey-box">
                 <strong>Decryption exponent d = </strong><span id="dValue">Waiting for d...</span>
             </div>
         </div>
 
         <!-- Download Column with link -->
-        <div class="download-column">
+        <div class="xdownload-column">
             <h2>Download RSA Keys</h2>
             <a id="downloadLink" href="#" style="display:none;" download="rsa-keys.txt">Download RSA Key Data</a>
         </div>
