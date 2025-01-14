@@ -4,6 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Send Choucoin</title>
+<style>
+/* Style for the result container */
+#resultContainer {
+	position: relative; /* Positioning context for the button */
+	width: 80%;  /* Make the result box half the screen width */
+	height: 200px;  /* Fixed height */
+	overflow: auto; /* Scrollable content */
+	border: 1px solid #ccc;
+	padding: 10px;
+	margin-top: 10px;
+	white-space: pre-wrap;  /* Ensures that long lines break properly */
+	word-wrap: break-word;
+	margin: 20px auto;  /* Center the box horizontally */
+}
+
+/* Style for the copy button */
+#copyButton {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	padding: 12px 20px;
+	cursor: pointer;
+	background-color: #ff5722;  /* Bright color to make the button stand out */
+	color: white;
+	border: none;
+	border-radius: 5px;
+	font-size: 16px;  /* Larger font for visibility */
+	font-weight: bold;
+	box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+	transition: background-color 0.3s ease;
+}
+
+/* Button hover effect */
+#copyButton:hover {
+	background-color: #e64a19;
+}
+
+/* Make the text area within the box more readable */
+/* Remove any default styling from pre */
+#resultText {
+    white-space: pre-wrap;  /* Keeps line breaks and spacing */
+    word-wrap: break-word;  /* Wrap long words */
+    background-color: transparent;  /* Make background transparent */
+    color: black;  /* Ensure text color is readable */
+    margin: 0;  /* Remove default margin */
+    padding: 0;  /* Remove any padding */
+    border: none;  /* Ensure there's no border */
+}
+
+/* To ensure the copy button is visible */
+#copyButton.visible {
+	display: block !important;
+}
+</style>
 </head>
 <body>
     <h1>Send Choucoin</h1>
@@ -34,14 +88,14 @@
     </div>
 
     <!-- Scrollable output box with copy button inside -->
-    <div id="ccresultContainer">
-        <button id="cccopyButton" class="visible" onclick="copyToClipboard()">Copy</button>
-        <pre id="ccresultText"></pre>
+    <div id="resultContainer">
+        <button id="copyButton" class="visible" onclick="copyToClipboard()">Copy</button>
+        <pre id="resultText"></pre>
     </div>
 
 	
     <!-- Link to external JavaScript file -->
-    <script src="{{ base.url | prepend: site.url }}/assets/js/script.js"></script>
+    <script src="./assets/js/script.js"></script>
 	
 </body>
 </html>
