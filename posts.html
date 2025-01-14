@@ -24,6 +24,7 @@
 
     <script>
         // Function to handle form submission
+		const url = "https://choucoin-posts-4f7c7496eb49.herokuapp.com/";
         document.getElementById('postForm').addEventListener('submit', async function(event) {
             event.preventDefault();  // Prevent form from refreshing the page
 
@@ -31,7 +32,7 @@
             if (!content) return;
 
             // Send POST request to backend to submit the post
-            const response = await fetch('/submit-post', {
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -51,7 +52,7 @@
 
         // Function to load and display posts
         async function loadPosts() {
-            const response = await fetch('/posts');
+            const response = await fetch('url');
             const posts = await response.json();
             
             const postsContainer = document.getElementById('postsContainer');
@@ -70,6 +71,8 @@
 
         // Initial load of posts
         loadPosts();
+		
+		
     </script>
 	
 	
