@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recent Posts</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    caption {
+      font-size: 1.5em;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Recent Posts</h1>
+  <table>
+    <caption>Last 20 Posts</caption>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Content</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody id="postTableBody">
+      <!-- Rows will be dynamically inserted here -->
+    </tbody>
+  </table>
+
+  <script>
+    // URL of your backend's GET /posts endpoint
+    const postsEndpoint = 'https://choucoin-posts-4f7c7496eb49.herokuapp.com/posts';
+	
+    // Function to fetch and display posts
+    async function fetchPosts() {
+      try {
+        const response = await fetch(postsEndpoint);
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`);
+        }
+
+        const posts = await response.json();
+        const postTableBody = document.getElementById('postTableBody');
+
+        // Display the last 20 posts
+        posts.slice(0, 20).forEach((post, index) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${post.content}</td>
+            <td>${new Date(post.timestamp).toLocaleString()}</td>
+          `;
+          postTableBody.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+        const postTableBody = document.getElementById('postTableBody');
+        postTableBody.innerHTML = `
+          <tr>
+            <td colspan="3" style="text-align: center; color: red;">
+              Unable to load posts. Please try again later.
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // Fetch posts when the page loads
+    window.onload = fetchPosts;
+  </script>
+</body>
+</html>
