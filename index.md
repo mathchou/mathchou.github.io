@@ -3,11 +3,15 @@ layout: default
 title: MathChou Homepage
 ---
 
-# Choucoin
+
+
+# Choucoin&copy;
 
 * * *
 
 ## Introduction
+
+<img src="choucoin_logo.png" alt="coin" width="100"/>
 
 ### Welcome to the future
 
