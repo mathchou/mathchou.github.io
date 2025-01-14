@@ -4,10 +4,12 @@ layout: default
 
 ## Welcome to Choucoin
 
-Tool to generate your public and private keys: [Key generator](./generateRSAkeypair.html)
+1. Tool to generate your public and private keys: [Key generator](./generateRSAkeypair.html)
 
-  - Use the above tool to create a public and private key pair. It also makes a files that you should save (and keep to yourself!) for future reference.
+  - Use the above tool to create a public and private key pair. It also makes a file that you should save (and keep to yourself!) for future reference.
   
-Creating and Signing transactions tool: [Transaction Creator](./send-choucoin.html)
+2. Creating and Signing transactions tool: [Transaction Creator](./send-choucoin.html)
+
+  - Here you will find a tool that can be used to send Choucoin 
 
 [back](./)

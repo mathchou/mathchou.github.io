@@ -1,11 +1,9 @@
-<!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Send Choucoin</title>
-    <!-- Link to the external CSS file -->
-    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <h1>Send Choucoin</h1>
@@ -36,13 +34,14 @@
     </div>
 
     <!-- Scrollable output box with copy button inside -->
-    <div id="resultContainer">
-        <button id="copyButton" class="visible" onclick="copyToClipboard()">Copy</button>
-        <pre id="resultText"></pre>
+    <div id="ccresultContainer">
+        <button id="cccopyButton" class="visible" onclick="copyToClipboard()">Copy</button>
+        <pre id="ccresultText"></pre>
     </div>
 
 	
-    <script src="script.js"></script>
+    <!-- Link to external JavaScript file -->
+    <script src="{{ base.url | prepend: site.url }}/assets/js/script.js"></script>
 	
 </body>
 </html>
