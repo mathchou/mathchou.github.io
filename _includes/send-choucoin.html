@@ -19,26 +19,24 @@
 	margin: 20px auto;  /* Center the box horizontally */
 }
 
-/* Style for the copy button */
-#copyButton {
-	position: absolute;
-	top: 10px;
-	right: 10px;
-	padding: 12px 20px;
-	cursor: pointer;
-	background-color: #ff5722;  /* Bright color to make the button stand out */
+.button-container {
+        margin-top: 15px;
+        display: flex;
+        gap: 10px; /* Add spacing between buttons */
+    }
+
+button {
+	background-color: #4CAF50;
 	color: white;
+	padding: 10px 15px;
 	border: none;
 	border-radius: 5px;
-	font-size: 16px;  /* Larger font for visibility */
-	font-weight: bold;
-	box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-	transition: background-color 0.3s ease;
+	cursor: pointer;
+	font-size: 16px;
 }
 
-/* Button hover effect */
-#copyButton:hover {
-	background-color: #e64a19;
+button:hover {
+	background-color: #45a049;
 }
 
 /* Make the text area within the box more readable */
@@ -57,7 +55,44 @@
 #copyButton.visible {
 	display: block !important;
 }
+
+	#main {
+		flex: 3;
+	}
+	#sidebar {
+		flex: 1;
+		margin-left: 20px;
+		padding: 10px;
+		border: 1px solid #ddd;
+		border-radius: 5px;
+		background-color: #f9f9f9;
+	}
+	#postsContainer div {
+		margin-bottom: 15px;
+		padding: 10px;
+		border: 1px solid #ddd;
+		border-radius: 5px;
+		background-color: #f9f9f9;
+	}
+	textarea {
+		width: 100%;
+		height: 100px;
+		margin-bottom: 10px;
+	}
+	
+	.confirmation-message {
+        margin-top: 5px;
+        font-size: 14px;
+        color: #4CAF50; /* Green color for success */
+        display: none; /* Hidden by default */
+    }
+
+    .error-message {
+        color: #f44336; /* Red color for errors */
+    }
+	
 </style>
+
 </head>
 <body>
     <h1>Send Choucoin</h1>
@@ -80,22 +115,131 @@
 		
 		<!-- File input for uploading the private key file -->
 		<label for="fileInput">User ID and keys file:</label>
-        <input type="file" id="fileInput" accept=".txt">
+		<input type="file" id="fileInput" accept=".txt">
+		<div id="fileConfirmation" class="confirmation-message"></div>
     
 
         <!-- Button to generate transaction after loading the keys -->
-        <button onclick="generateTransaction()">Generate Transaction</button>
+		 <div class="button-container">
+			<button onclick="generateTransaction()">Generate Transaction</button>
+			<button onclick="postTransaction()">Post Transaction</button>
+		</div>
+
     </div>
 
     <!-- Scrollable output box with copy button inside -->
-    <div id="resultContainer">
-        <button id="copyButton" class="visible" onclick="copyToClipboard()">Copy</button>
-        <pre id="resultText"></pre>
-    </div>
+	<div id="resultContainer">
+		<pre id="resultText"></pre>
+	</div>
 
 	
+	<h1>Recent Transactions</h1>
+	<div id="postsContainer">
+		<!-- Posts will be displayed here -->
+	</div>
+
+	<button id="loadMoreBtn">Load More</button>
+	
+	
+		
     <!-- Link to external JavaScript file -->
     <script src="./assets/js/script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.4.0/purify.min.js"></script>
+    <script>
 	
+        const url = "https://choucoin-posts-4f7c7496eb49.herokuapp.com/";
+        let currentPage = 1;
+        const postsPerPage = 5;
+
+        // Function to handle form submission
+        document.getElementById('postForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const content = document.getElementById('content').value;
+            if (!content) return;
+
+            // Sanitize input content
+            const sanitizedContent = DOMPurify.sanitize(content);
+
+            // Send POST request to backend to submit the post
+            const response = await fetch(`${url}submit-post`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ content: sanitizedContent }),
+            });
+
+            if (response.ok) {
+                alert('Post submitted successfully!');
+                document.getElementById('content').value = '';  // Clear the form
+                loadPosts(true);  // Reload the posts list
+                loadRecentTransactions();  // Update the sidebar
+            } else {
+                const data = await response.json();
+                alert('Error: ' + data.error);
+            }
+        });
+
+		// Function to post the transaction to the transactions container
+		function postTransaction() {
+			const transaction = document.getElementById('resultText').textContent;
+			if (!transaction) {
+				alert('No transaction generated to post.');
+				return;
+			}
+
+			const transactionsContainer = document.getElementById('postsContainer');
+			const transactionDiv = document.createElement('div');
+			transactionDiv.innerHTML = `
+				<p>${DOMPurify.sanitize(transaction)}</p>
+				<small>Posted on ${new Date().toLocaleString()}</small>
+			`;
+			transactionsContainer.appendChild(transactionDiv);
+
+			alert('Transaction posted successfully!');
+		}
+
+        // Function to load and display posts
+        async function loadPosts(reset = false) {
+            try {
+                if (reset) currentPage = 1;
+                const response = await fetch(`${url}posts?page=${currentPage}&limit=${postsPerPage}`);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch posts: ${response.status}`);
+                }
+
+                const posts = await response.json();
+                const postsContainer = document.getElementById('postsContainer');
+                if (reset) postsContainer.innerHTML = ''; // Clear existing posts
+
+                posts.forEach(post => {
+                    const postDiv = document.createElement('div');
+                    postDiv.innerHTML = `
+                        <p>${DOMPurify.sanitize(post.content)}</p>
+                        <small>Posted on ${new Date(post.timestamp).toLocaleString()}</small>
+                    `;
+                    postsContainer.appendChild(postDiv);
+                });
+
+                if (posts.length < postsPerPage) {
+                    document.getElementById('loadMoreBtn').style.display = 'none';
+                } else {
+                    document.getElementById('loadMoreBtn').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading posts:', error);
+            }
+        }
+
+        // Load more posts when the button is clicked
+        document.getElementById('loadMoreBtn').addEventListener('click', () => {
+            currentPage++;
+            loadPosts();
+        });
+
+        // Initial load of posts and recent transactions
+        loadPosts(true);
+    </script>
 </body>
 </html>
