@@ -179,9 +179,7 @@ document.getElementById('fileInput').addEventListener('change', function(event) 
                 alert("Please upload a valid file with N and d.");
                 return;
             }
-
-            // Notify user that the keys are loaded
-            alert("Private keys (N and d) have been successfully loaded.");
+			
         };
         reader.readAsText(file);
     } else {
