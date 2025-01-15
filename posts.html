@@ -8,18 +8,6 @@
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
-            display: flex;
-        }
-        #main {
-            flex: 3;
-        }
-        #sidebar {
-            flex: 1;
-            margin-left: 20px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background-color: #f9f9f9;
         }
         #postsContainer div {
             margin-bottom: 15px;
@@ -36,35 +24,21 @@
     </style>
 </head>
 <body>
-    <div id="main">
-        <h1>Anonymous Posting</h1>
+    <h1>Anonymous Posting</h1>
 
-        <!-- Form for submitting posts -->
-        <form id="postForm">
-            <textarea id="content" placeholder="Write your post here..." required></textarea><br>
-            <button type="submit">Submit Post</button>
-        </form>
+    <!-- Form for submitting posts -->
+    <form id="postForm">
+        <textarea id="content" placeholder="Write your post here..." required></textarea><br>
+        <button type="submit">Submit Post</button>
+    </form>
 
-        <h2>Recent Posts</h2>
-        <div id="postsContainer">
-            <!-- Posts will be displayed here -->
-        </div>
-
-        <button id="loadMoreBtn">Load More</button>
+    <h2>Recent Posts</h2>
+    <div id="postsContainer">
+        <!-- Posts will be displayed here -->
     </div>
 
-    <div id="sidebar">
-        <h2>Recent Transactions</h2>
-        <div id="transactionsContainer">
-            <!-- Recent transactions will be displayed here -->
-        </div>
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.4.0/purify.min.js"></script>
     <script>
         const url = "https://choucoin-posts-4f7c7496eb49.herokuapp.com/";
-        let currentPage = 1;
-        const postsPerPage = 5;
 
         // Function to handle form submission
         document.getElementById('postForm').addEventListener('submit', async function(event) {
@@ -73,23 +47,19 @@
             const content = document.getElementById('content').value;
             if (!content) return;
 
-            // Sanitize input content
-            const sanitizedContent = DOMPurify.sanitize(content);
-
             // Send POST request to backend to submit the post
-            const response = await fetch(`${url}submit-post`, {
+            const response = await fetch(${url}submit-post, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ content: sanitizedContent }),
+                body: JSON.stringify({ content }),
             });
 
             if (response.ok) {
                 alert('Post submitted successfully!');
                 document.getElementById('content').value = '';  // Clear the form
-                loadPosts(true);  // Reload the posts list
-                loadRecentTransactions();  // Update the sidebar
+                loadPosts();  // Reload the posts list
             } else {
                 const data = await response.json();
                 alert('Error: ' + data.error);
@@ -97,71 +67,32 @@
         });
 
         // Function to load and display posts
-        async function loadPosts(reset = false) {
+        async function loadPosts() {
             try {
-                if (reset) currentPage = 1;
-                const response = await fetch(`${url}posts?page=${currentPage}&limit=${postsPerPage}`);
+                const response = await fetch(${url}posts);
                 if (!response.ok) {
-                    throw new Error(`Failed to fetch posts: ${response.status}`);
+                    throw new Error(Failed to fetch posts: ${response.status});
                 }
 
                 const posts = await response.json();
                 const postsContainer = document.getElementById('postsContainer');
-                if (reset) postsContainer.innerHTML = ''; // Clear existing posts
+                postsContainer.innerHTML = ''; // Clear existing posts
 
                 posts.forEach(post => {
                     const postDiv = document.createElement('div');
-                    postDiv.innerHTML = `
-                        <p>${DOMPurify.sanitize(post.content)}</p>
+                    postDiv.innerHTML = 
+                        <p>${post.content}</p>
                         <small>Posted on ${new Date(post.timestamp).toLocaleString()}</small>
-                    `;
+                    ;
                     postsContainer.appendChild(postDiv);
                 });
-
-                if (posts.length < postsPerPage) {
-                    document.getElementById('loadMoreBtn').style.display = 'none';
-                } else {
-                    document.getElementById('loadMoreBtn').style.display = 'block';
-                }
             } catch (error) {
                 console.error('Error loading posts:', error);
             }
         }
 
-        // Function to load recent transactions for the sidebar
-        async function loadRecentTransactions() {
-            try {
-                const response = await fetch(`${url}recent-transactions`);
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch transactions: ${response.status}`);
-                }
-
-                const transactions = await response.json();
-                const transactionsContainer = document.getElementById('transactionsContainer');
-                transactionsContainer.innerHTML = ''; // Clear existing transactions
-
-                transactions.slice(0, 5).forEach(transaction => {
-                    const transactionDiv = document.createElement('div');
-                    transactionDiv.innerHTML = `
-                        <p>${DOMPurify.sanitize(transaction.description)}</p>
-                        <small>${new Date(transaction.timestamp).toLocaleString()}</small>
-                    `;
-                    transactionsContainer.appendChild(transactionDiv);
-                });
-            } catch (error) {
-                console.error('Error loading transactions:', error);
-            }
-        }
-
-        // Load more posts when the button is clicked
-        document.getElementById('loadMoreBtn').addEventListener('click', () => {
-            currentPage++;
-            loadPosts();
-        });
-
-        // Initial load of posts and recent transactions
-        loadPosts(true);
-        loadRecentTransactions();
+        // Initial load of posts
+        loadPosts();
     </script>
 </body>
 </html>
