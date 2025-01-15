@@ -13,17 +13,40 @@ app.use(cors()); // Enable cross-origin requests to allow frontend and backend c
 app.options('*', cors()); // Explicitly handle preflight OPTIONS requests for all routes
 app.use(bodyParser.json()); // Automatically parse incoming JSON request payloads
 
-// MongoDB connection string (use an environment variable or a fallback string for local testing)
-const mongoURI = process.env.MONGO_URI || 'your-mongodb-connection-string';
+const db_pword = '0VGX360EWlttD84C'
 
-// Connect to MongoDB
-mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => {
-    console.log('Connected to MongoDB'); // Log success message on successful connection
-  })
-  .catch(err => {
-    console.error('Error connecting to MongoDB:', err); // Log an error message on connection failure
-  });
+const { MongoClient, ServerApiVersion } = require('mongodb');
+const uri = "mongodb+srv://mokechoke:0VGX360EWlttD84C@choucoin-posts.32p95.mongodb.net/?retryWrites=true&w=majority&appName=choucoin-posts";
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
+});
+async function run() {
+  try {
+    // Connect the client to the server	(optional starting in v4.7)
+    await client.connect();
+    // Send a ping to confirm a successful connection
+    await client.db("admin").command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+  } finally {
+    // Ensures that the client will close when you finish/error
+    await client.close();
+  }
+}
+run().catch(console.dir);
+
+const mongoURI = 'mongodb+srv://mokechoke:0VGX360EWlttD84C@choucoin-posts.32p95.mongodb.net/?retryWrites=true&w=majority&appName=choucoin-posts'
+
+mongoose.connect(mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true, // Optional in newer drivers but does no harm
+})
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => console.error('Error connecting to MongoDB:', err.message));
 
 // Define a Mongoose schema for posts (structure for storing data in MongoDB)
 const postSchema = new mongoose.Schema({
@@ -65,6 +88,8 @@ app.get('/posts', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' }); // Respond with a server error
   }
 });
+
+
 
 // Global error handler (optional, but useful for catching unhandled errors)
 app.use((err, req, res, next) => {

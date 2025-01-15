@@ -58,19 +58,6 @@ This text output is the actual message we want to post to the transaction forum.
 
 
 
-# Current Teaching
-
-(Courses taught to be filled in here)
-
-# Research
-
-(List of publications here)
-
-
-
-
-Text can be **bold**, _italic_, or ~~strikethrough~~.
-
 # Choucoin&copy; tools
 
 [Crypto Functions](./cryptofuncs.html).

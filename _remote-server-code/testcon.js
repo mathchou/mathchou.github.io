@@ -1,7 +1,10 @@
 const mongoose = require('mongoose');
 
+
+const db_pword = '0VGX360EWlttD84C'
+
 // Replace with your MongoDB URI
-const mongoURI = 'mongodb+srv://mokechoke:14G9hN3CoqvsWbb6@choucoin-posts.32p95.mongodb.net/?retryWrites=true&w=majority&appName=choucoin-posts';
+const mongoURI = 'mongodb+srv://mokechoke:0VGX360EWlttD84C@choucoin-posts.32p95.mongodb.net/?retryWrites=true&w=majority&appName=choucoin-posts';
 
 async function testMongoConnection() {
     try {
