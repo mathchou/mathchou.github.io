@@ -132,86 +132,65 @@ button:hover {
 		<pre id="resultText"></pre>
 	</div>
 
-	
-	<h1>Recent Transactions</h1>
-	<div id="postsContainer">
-		<!-- Posts will be displayed here -->
-	</div>
 
-	<button id="loadMoreBtn">Load More</button>
-	
-	
-		
     <!-- Link to external JavaScript file -->
     <script src="./assets/js/script.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.4.0/purify.min.js"></script>
+
+    <h2>Recent Posts</h2>
+    <div id="postsContainer">
+        <!-- Posts will be displayed here -->
+    </div>
+
     <script>
-	
         const url = "https://choucoin-posts-4f7c7496eb49.herokuapp.com/";
-        let currentPage = 1;
-        const postsPerPage = 5;
+        let page = 0;
+        const limit = 10;
+        let loading = false;
 
         // Function to handle form submission
         document.getElementById('postForm').addEventListener('submit', async function(event) {
             event.preventDefault();
 
-            const content = document.getElementById('content').value;
+            let content = document.getElementById('content').value;
             if (!content) return;
 
-            // Sanitize input content
-            const sanitizedContent = DOMPurify.sanitize(content);
+            // Sanitize the input
+            content = DOMPurify.sanitize(content);
 
-            // Send POST request to backend to submit the post
             const response = await fetch(`${url}submit-post`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ content: sanitizedContent }),
+                body: JSON.stringify({ content }),
             });
 
             if (response.ok) {
                 alert('Post submitted successfully!');
-                document.getElementById('content').value = '';  // Clear the form
-                loadPosts(true);  // Reload the posts list
-                loadRecentTransactions();  // Update the sidebar
+                document.getElementById('content').value = ''; // Clear the form
+                page = 0;
+                document.getElementById('postsContainer').innerHTML = ''; // Reset posts
+                loadPosts(); // Reload the posts
             } else {
                 const data = await response.json();
                 alert('Error: ' + data.error);
             }
         });
 
-		// Function to post the transaction to the transactions container
-		function postTransaction() {
-			const transaction = document.getElementById('resultText').textContent;
-			if (!transaction) {
-				alert('No transaction generated to post.');
-				return;
-			}
+        // Function to load and display posts with pagination
+        async function loadPosts() {
+            if (loading) return;
+            loading = true;
 
-			const transactionsContainer = document.getElementById('postsContainer');
-			const transactionDiv = document.createElement('div');
-			transactionDiv.innerHTML = `
-				<p>${DOMPurify.sanitize(transaction)}</p>
-				<small>Posted on ${new Date().toLocaleString()}</small>
-			`;
-			transactionsContainer.appendChild(transactionDiv);
-
-			alert('Transaction posted successfully!');
-		}
-
-        // Function to load and display posts
-        async function loadPosts(reset = false) {
             try {
-                if (reset) currentPage = 1;
-                const response = await fetch(`${url}posts?page=${currentPage}&limit=${postsPerPage}`);
+                const response = await fetch(`${url}posts?page=${page}&limit=${limit}`);
                 if (!response.ok) {
                     throw new Error(`Failed to fetch posts: ${response.status}`);
                 }
 
                 const posts = await response.json();
                 const postsContainer = document.getElementById('postsContainer');
-                if (reset) postsContainer.innerHTML = ''; // Clear existing posts
 
                 posts.forEach(post => {
                     const postDiv = document.createElement('div');
@@ -222,24 +201,25 @@ button:hover {
                     postsContainer.appendChild(postDiv);
                 });
 
-                if (posts.length < postsPerPage) {
-                    document.getElementById('loadMoreBtn').style.display = 'none';
-                } else {
-                    document.getElementById('loadMoreBtn').style.display = 'block';
+                if (posts.length > 0) {
+                    page++;
                 }
             } catch (error) {
                 console.error('Error loading posts:', error);
+            } finally {
+                loading = false;
             }
         }
 
-        // Load more posts when the button is clicked
-        document.getElementById('loadMoreBtn').addEventListener('click', () => {
-            currentPage++;
-            loadPosts();
+        // Add infinite scroll
+        window.addEventListener('scroll', () => {
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 50) {
+                loadPosts();
+            }
         });
 
-        // Initial load of posts and recent transactions
-        loadPosts(true);
+        // Initial load of posts
+        loadPosts();
     </script>
 </body>
 </html>
