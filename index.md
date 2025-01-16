@@ -54,6 +54,11 @@ This text output is the actual message we want to post to the transaction forum.
 
 ## Verifying transactions, securing the ledger
 
+Choucoin is a [proof of stake](https://en.wikipedia.org/wiki/Proof_of_stake) cryptocurrency. Users may choose to "stake" currency in order to be added to a list of validators. This currency is locked up from trading. Every week a subset of validators is chosen to verify transactions and add them to the ledger. If there is consensus between the chosen validators on which transactions are valid, then each is rewarded newly minted Choucoin&copy;. If a validator includes invalid transactions into the ledger, they lose their "staked" currency.
+
+Current list of validators: [Currently Staked Validators](./validators.html)
+
+There are validation tools available here: [Verification of Transactions](./verify_trans.html)
 
 
 
