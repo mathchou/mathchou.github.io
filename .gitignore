@@ -4,3 +4,46 @@ _site
 .jekyll-metadata
 .env
 vendor
+
+# Byte-compiled files
+*.pyc
+__pycache__/
+
+# Virtual environments
+env/
+venv/
+
+# Dependency directories
+.eggs/
+*.egg-info/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Heroku-specific files
+.heroku/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Production build files (if applicable)
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Heroku-specific files
+.heroku/
