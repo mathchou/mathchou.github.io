@@ -47,3 +47,6 @@ build/
 
 # Heroku-specific files
 .heroku/
+
+*.key
+*.pem
