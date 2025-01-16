@@ -39,5 +39,13 @@ layout: default
 	  - digits that are outside of the range of validator-candidates are skipped (e.g. if there are 42 validators, the last two digits '48' is skipped, and '23' is chosen as publisher instead)
 6. Penalties:
   - If a publisher or validator is found to have included false transactions (bad signatures, double spending, etc.) then they will forfeit their position as a candidate. They will lose their staked Choucoin&copy; and be required to stake twice as much in order to be re-added to the candidate list.
+  - Failing to include any valid transaction posted between blocks will incur a penalty as well.
+  
+  
+  
+  
+## Choucoin Leaderboard
+
+[Link to last verified wallet amounts](./wallets.html)
 
 [back](./)
