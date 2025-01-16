@@ -349,9 +349,155 @@ async function loadPosts() {
     });
 }
 
+// Select the form element
+const form = document.getElementById('registration-form');
+const responseElement = document.getElementById('response');
 
+// Add an event listener for form submission
+form.addEventListener('submit', async (event) => {
+  event.preventDefault(); // Prevent the form from reloading the page
 
+  // Extract input values
+  const user_id = document.getElementById('user_id').value.trim();
+  const N = document.getElementById('N').value;
 
+  // Validate user_id (allow only alphanumeric characters, underscores, and dashes)
+  const userIdRegex = /^[a-zA-Z0-9_-]+$/;
+  if (!userIdRegex.test(user_id)) {
+	responseElement.textContent = 'Error: User ID can only contain letters, numbers, underscores, and dashes.';
+	return;
+  }
+
+  try {
+	// Make the POST request
+	const response = await fetch('${herokuBackendUrl}/save-user-data', {
+	  method: 'POST',
+	  headers: {
+		'Content-Type': 'application/json',
+	  },
+	  body: JSON.stringify({ user_id, N }), // Send the data as JSON
+	});
+
+	// Handle the response
+	if (response.ok) {
+	  const data = await response.json();
+	  responseElement.textContent = `Success: ${data.message}`;
+	} else {
+	  const error = await response.json();
+	  responseElement.textContent = `Error: ${error.error}`;
+	}
+  } catch (err) {
+	console.error('Request failed:', err);
+	responseElement.textContent = 'An error occurred. Please try again.';
+  }
+});
+
+// Select elements
+const form = document.getElementById('registration-form');
+const responseElement = document.getElementById('response');
+const usersTableBody = document.querySelector('#users-table tbody');
+
+// Function to fetch all registered users from the backend
+async function fetchUsersFromBackend() {
+    try {
+        const response = await fetch(`${herokuBackendUrl}/get-users`);
+        if (response.ok) {
+            return await response.json(); // Return the user data
+        } else {
+            console.error('Failed to fetch users:', await response.text());
+            return [];
+        }
+    } catch (err) {
+        console.error('Error fetching users:', err);
+        return [];
+    }
+}
+
+// Function to populate the user list in the table
+function populateUserList(users) {
+    // Clear the table body
+    usersTableBody.innerHTML = '';
+
+    // Populate the table with user data
+    users.forEach(user => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${user.user_id}</td>
+            <td>
+                ${user.N}
+                <button class="copy-button" data-n-value="${user.N}">Copy</button>
+            </td>
+        `;
+        usersTableBody.appendChild(row);
+    });
+
+    // Add event listeners to copy buttons
+    const copyButtons = document.querySelectorAll('.copy-button');
+    copyButtons.forEach(button => {
+        button.addEventListener('click', event => {
+            const nValue = event.target.getAttribute('data-n-value');
+            copyToClipboard(nValue);
+        });
+    });
+}
+
+// Function to copy text to the clipboard
+function copyToClipboard(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    alert('Copied to clipboard: ' + text);
+}
+
+// Main function to fetch and display users
+async function fetchUsers() {
+    const users = await fetchUsersFromBackend();
+    populateUserList(users);
+}
+
+// Add event listener for form submission
+form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    // Extract input values
+    const user_id = document.getElementById('user_id').value.trim();
+    const N = document.getElementById('N').value;
+
+    // Validate user_id
+    const userIdRegex = /^[a-zA-Z0-9_-]+$/;
+    if (!userIdRegex.test(user_id)) {
+        responseElement.textContent = 'Error: User ID can only contain letters, numbers, underscores, and dashes.';
+        return;
+    }
+
+    try {
+        // Make the POST request
+        const response = await fetch(`${herokuBackendUrl}/save-user-data`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ user_id, N }),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            responseElement.textContent = `Success: ${data.message}`;
+            fetchUsers(); // Refresh the user list
+        } else {
+            const error = await response.json();
+            responseElement.textContent = `Error: ${error.error}`;
+        }
+    } catch (err) {
+        console.error('Request failed:', err);
+        responseElement.textContent = 'An error occurred. Please try again.';
+    }
+});
+
+// Fetch and display users when the page loads
 
 
 

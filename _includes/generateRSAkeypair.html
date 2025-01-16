@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>128-bit Prime Generator and RSA Keys</title>
+    <title>RSA key generation</title>
 <style>
 #xcontainer {
     display: flex;
@@ -75,8 +75,37 @@
             <a id="downloadLink" href="#" style="display:none;" download="rsa-keys.txt">Download RSA Key Data</a>
         </div>
     </div>
+	
+	<h1>Register User</h1>
+  <form id="registration-form">
+    <label for="user_id">User ID:</label>
+    <input type="text" id="user_id" name="user_id" required>
+    <br><br>
+    <label for="N">Key (N):</label>
+    <input type="number" id="N" name="N" required>
+    <br><br>
+    <button type="submit">Register</button>
+  </form>
+
+  <p id="response"></p>
+
+  <h1>Registered Users</h1>
+  <table border="1" id="users-table">
+    <thead>
+      <tr>
+        <th>User ID</th>
+        <th>Public Key (N)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- User data will be dynamically inserted here -->
+    </tbody>
+  </table>
+
 
     <!-- Link to external JavaScript file -->
     <script src="./assets/js/script.js"></script>
+	<!-- populates user list when page loads -->
+	<script> fetchUsers(); </script>
 </body>
 </html>
