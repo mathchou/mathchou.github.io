@@ -119,7 +119,7 @@ async function fetchSingleUserFromBackend() {
 // Function to load and display posts with verification and block inclusion
 async function loadPostsToVerify() {
 	try {
-		const response = await fetch(`${url}posts`);
+		const response = await fetch(`${herokuBackendUrl}posts`);
 		if (!response.ok) {
 			throw new Error(`Failed to fetch posts: ${response.status}`);
 		}
@@ -201,3 +201,5 @@ async function loadPostsToVerify() {
 		console.error('Error loading posts:', error);
 	}
 }
+
+loadPostsToVerify();

@@ -1,0 +1,70 @@
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send Choucoin</title>
+<style>
+/* Style for the result container */
+#resultContainer {
+	position: relative; /* Positioning context for the button */
+	width: 80%;  /* Make the result box half the screen width */
+	height: 200px;  /* Fixed height */
+	overflow: auto; /* Scrollable content */
+	border: 1px solid #ccc;
+	padding: 10px;
+	margin-top: 10px;
+	white-space: pre-wrap;  /* Ensures that long lines break properly */
+	word-wrap: break-word;
+	margin: 20px auto;  /* Center the box horizontally */
+}
+
+/* Make the text area within the box more readable */
+/* Remove any default styling from pre */
+#resultText {
+    white-space: pre-wrap;  /* Keeps line breaks and spacing */
+    word-wrap: break-word;  /* Wrap long words */
+    background-color: transparent;  /* Make background transparent */
+    color: black;  /* Ensure text color is readable */
+    margin: 0;  /* Remove default margin */
+    padding: 0;  /* Remove any padding */
+    border: none;  /* Ensure there's no border */
+}
+
+
+#postsContainer div {
+	margin-bottom: 15px;
+	padding: 10px;
+	border: 1px solid #ddd;
+	border-radius: 5px;
+	background-color: #f9f9f9;
+}
+
+</style>
+</head>
+<body>
+    <h1>Verification and Block Creation</h1>
+
+	Use the table below to verify and select transactions to be included in the next block.
+	
+	<h2>Previous Transactions</h2>
+	<form id="postForm">
+    <div id="postsContainer">
+        <!-- Posts will be displayed here -->
+    </div>
+    </form>
+
+
+    <!-- Form to input transaction details -->
+    <div>		
+		<!-- File input for uploading the private key file -->
+		<label for="fileInput">User ID and keys file:</label>
+        <input type="file" id="fileInput" accept=".txt">
+	</div>
+	
+    <!-- Link to external JavaScript file -->
+    <script src="./assets/js/verification-scripts.js"></script>
+	<script></script>
+	
+</body>
+</html>

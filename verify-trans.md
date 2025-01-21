@@ -2,7 +2,7 @@
 layout: default
 ---
 
-{% include verify_trans.html %}
+{% include verify-trans.html %}
 
 To be updated with verification tools.
 

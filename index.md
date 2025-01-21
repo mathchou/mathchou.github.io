@@ -58,7 +58,7 @@ Choucoin is a [proof of stake](https://en.wikipedia.org/wiki/Proof_of_stake) cry
 
 Current list of validators: [Currently Staked Validators](./validators.html)
 
-There are validation tools available here: [Verification of Transactions](./verify_trans.html)
+There are validation tools available here: [Verification of Transactions](./verify-trans.html)
 
 
 

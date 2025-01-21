@@ -186,7 +186,7 @@ document.getElementById('postForm').addEventListener('submit', async function(ev
 // Function to load and display posts
 async function loadPosts() {
 	try {
-		const response = await fetch(`${url}posts`);
+		const response = await fetch(`${herokuBackendUrl}posts`);
 		if (!response.ok) {
 			throw new Error(`Failed to fetch posts: ${response.status}`);
 		}
@@ -210,6 +210,6 @@ async function loadPosts() {
 
 
 // Load posts on page startup
-loadPosts()
+loadPosts();
 
 

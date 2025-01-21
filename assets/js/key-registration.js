@@ -149,49 +149,67 @@ d = ${d}
 }
 
 // Select elements
-const form = document.getElementById('registration-form');
-const responseElement = document.getElementById('response');
 const usersTableBody = document.querySelector('#users-table tbody');
 
-
 // Add an event listener for form submission
-form.addEventListener('submit-register', async (event) => {
+const form = document.getElementById('register-form'); // Ensure the form has the correct ID
+const responseElement = document.getElementById('response-message'); // Element to display response messages
+
+form.addEventListener('submit', async (event) => {
   event.preventDefault(); // Prevent the form from reloading the page
 
   // Extract input values
   const user_id = document.getElementById('user_id').value.trim();
-  const N = document.getElementById('N').value;
+  const N = document.getElementById('N').value.trim(); // Ensure N is trimmed too
 
   // Validate user_id (allow only alphanumeric characters, underscores, and dashes)
   const userIdRegex = /^[a-zA-Z0-9_-]+$/;
   if (!userIdRegex.test(user_id)) {
-	responseElement.textContent = 'Error: User ID can only contain letters, numbers, underscores, and dashes.';
-	return;
+    responseElement.textContent = 'Error: User ID can only contain letters, numbers, underscores, and dashes.';
+    responseElement.style.color = 'red'; // Indicate an error
+    return;
+  }
+
+  // Ensure N is provided and valid (optional: add specific validation for N if needed)
+  if (!N) {
+    responseElement.textContent = 'Error: N cannot be empty.';
+    responseElement.style.color = 'red'; // Indicate an error
+    return;
   }
 
   try {
-	// Make the POST request
-	const response = await fetch('${herokuBackendUrl}save-user-data', {
-	  method: 'POST',
-	  headers: {
-		'Content-Type': 'application/json',
-	  },
-	  body: JSON.stringify({ user_id, N }), // Send the data as JSON
-	});
+    // Make the POST request
+    const response = await fetch(`${herokuBackendUrl}save-user-data`, { // Ensure URL has the correct structure
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ user_id, N }), // Send the data as JSON
+    });
 
-	// Handle the response
-	if (response.ok) {
-	  const data = await response.json();
-	  responseElement.textContent = `Success: ${data.message}`;
-	} else {
-	  const error = await response.json();
-	  responseElement.textContent = `Error: ${error.error}`;
-	}
+    // Handle the response
+    if (response.ok) {
+      const data = await response.json();
+      responseElement.textContent = `Success: ${data.message}`;
+      responseElement.style.color = 'green'; // Indicate success
+    } else {
+      const error = await response.json();
+      responseElement.textContent = `Error: ${error.error}`;
+      responseElement.style.color = 'red'; // Indicate an error
+    }
   } catch (err) {
-	console.error('Request failed:', err);
-	responseElement.textContent = 'An error occurred. Please try again.';
+    console.error('Request failed:', err);
+    responseElement.textContent = 'An error occurred. Please try again.';
+    responseElement.style.color = 'red'; // Indicate an error
   }
+  
+  fetchUsers();
 });
+
+  
+  
+  
+  
 // Function to fetch all registered users from the backend
 async function fetchUsersFromBackend() {
     try {
@@ -264,4 +282,4 @@ async function fetchUsers() {
 }
 
 //populate users on page load
-// fetchUsers();
+fetchUsers();
