@@ -1,3 +1,6 @@
+
+const herokuBackendUrl = 'https://choucoin-posts-4f7c7496eb49.herokuapp.com/';  // Replace with your actual Heroku app URL
+
 // Miller-Rabin primality test using BigInt in JavaScript
 async function millerRabin(n, k = 5) {
     if (n === 2n || n === 3n) return true;
@@ -145,13 +148,14 @@ d = ${d}
     return URL.createObjectURL(blob);
 }
 
-
-// Select the form element
+// Select elements
 const form = document.getElementById('registration-form');
 const responseElement = document.getElementById('response');
+const usersTableBody = document.querySelector('#users-table tbody');
+
 
 // Add an event listener for form submission
-form.addEventListener('submit', async (event) => {
+form.addEventListener('submit-register', async (event) => {
   event.preventDefault(); // Prevent the form from reloading the page
 
   // Extract input values
@@ -167,7 +171,7 @@ form.addEventListener('submit', async (event) => {
 
   try {
 	// Make the POST request
-	const response = await fetch('${herokuBackendUrl}/save-user-data', {
+	const response = await fetch('${herokuBackendUrl}save-user-data', {
 	  method: 'POST',
 	  headers: {
 		'Content-Type': 'application/json',
@@ -188,16 +192,10 @@ form.addEventListener('submit', async (event) => {
 	responseElement.textContent = 'An error occurred. Please try again.';
   }
 });
-
-// Select elements
-const form = document.getElementById('registration-form');
-const responseElement = document.getElementById('response');
-const usersTableBody = document.querySelector('#users-table tbody');
-
 // Function to fetch all registered users from the backend
 async function fetchUsersFromBackend() {
     try {
-        const response = await fetch(`${herokuBackendUrl}/get-users`);
+        const response = await fetch(`${herokuBackendUrl}get-users`);
         if (response.ok) {
             return await response.json(); // Return the user data
         } else {
@@ -214,6 +212,16 @@ async function fetchUsersFromBackend() {
 function populateUserList(users) {
     // Clear the table body
     usersTableBody.innerHTML = '';
+
+    // Check if there are no users
+    if (users.length === 0) {
+        const emptyRow = document.createElement('tr');
+        emptyRow.innerHTML = `
+            <td colspan="3" style="text-align: center;">No users available</td>
+        `;
+        usersTableBody.appendChild(emptyRow);
+        return;
+    }
 
     // Populate the table with user data
     users.forEach(user => {
@@ -255,44 +263,5 @@ async function fetchUsers() {
     populateUserList(users);
 }
 
-// Add event listener for form submission
-form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-
-    // Extract input values
-    const user_id = document.getElementById('user_id').value.trim();
-    const N = document.getElementById('N').value;
-
-    // Validate user_id
-    const userIdRegex = /^[a-zA-Z0-9_-]+$/;
-    if (!userIdRegex.test(user_id)) {
-        responseElement.textContent = 'Error: User ID can only contain letters, numbers, underscores, and dashes.';
-        return;
-    }
-
-    try {
-        // Make the POST request
-        const response = await fetch(`${herokuBackendUrl}/save-user-data`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ user_id, N }),
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            responseElement.textContent = `Success: ${data.message}`;
-            fetchUsers(); // Refresh the user list
-        } else {
-            const error = await response.json();
-            responseElement.textContent = `Error: ${error.error}`;
-        }
-    } catch (err) {
-        console.error('Request failed:', err);
-        responseElement.textContent = 'An error occurred. Please try again.';
-    }
-});
-
 //populate users on page load
-fetchUsers();
+// fetchUsers();

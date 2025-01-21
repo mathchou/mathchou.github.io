@@ -349,9 +349,12 @@ async function loadPosts() {
     });
 }
 
-// Select the form element
+
+// Select elements
 const form = document.getElementById('registration-form');
 const responseElement = document.getElementById('response');
+const usersTableBody = document.querySelector('#users-table tbody');
+
 
 // Add an event listener for form submission
 form.addEventListener('submit', async (event) => {
@@ -391,11 +394,6 @@ form.addEventListener('submit', async (event) => {
 	responseElement.textContent = 'An error occurred. Please try again.';
   }
 });
-
-// Select elements
-const form = document.getElementById('registration-form');
-const responseElement = document.getElementById('response');
-const usersTableBody = document.querySelector('#users-table tbody');
 
 // Function to fetch all registered users from the backend
 async function fetchUsersFromBackend() {

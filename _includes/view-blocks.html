@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recent Blocks</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 300px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -150px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <h1>Recent Blocks</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Time Submitted</th>
+                <th>Signed Block Hash</th>
+                <th>Publisher Name</th>
+                <th>Transactions</th>
+                <th>Previous Block Hash</th>
+                <th>Verifier IDs</th>
+            </tr>
+        </thead>
+        <tbody id="blocksTableBody">
+            <!-- Rows will be populated dynamically -->
+        </tbody>
+    </table>
+
+    <script>
+        async function fetchRecentBlocks() {
+            try {
+                const response = await fetch('/recent-blocks'); // Adjust the endpoint as needed
+                const data = await response.json();
+
+                if (data.success) {
+                    const blocksTableBody = document.getElementById('blocksTableBody');
+                    blocksTableBody.innerHTML = '';
+
+                    data.blocks.forEach(block => {
+                        const row = document.createElement('tr');
+
+                        // Time Submitted
+                        const timeCell = document.createElement('td');
+                        timeCell.textContent = block.timeOfCreation;
+                        row.appendChild(timeCell);
+
+                        // Signed Block Hash
+                        const hashCell = document.createElement('td');
+                        hashCell.textContent = block.signedBlockHash;
+                        row.appendChild(hashCell);
+
+                        // Publisher Name
+                        const publisherCell = document.createElement('td');
+                        publisherCell.textContent = block.publisherName;
+                        row.appendChild(publisherCell);
+
+                        // Transactions (hover-over link)
+                        const transactionsCell = document.createElement('td');
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'tooltip';
+                        tooltip.textContent = 'View Transactions';
+                        const tooltipText = document.createElement('div');
+                        tooltipText.className = 'tooltiptext';
+                        tooltipText.textContent = block.transactions.join(', ');
+                        tooltip.appendChild(tooltipText);
+                        transactionsCell.appendChild(tooltip);
+                        row.appendChild(transactionsCell);
+
+                        // Previous Block Hash
+                        const previousHashCell = document.createElement('td');
+                        previousHashCell.textContent = block.previousBlockHash;
+                        row.appendChild(previousHashCell);
+
+                        // Verifier IDs
+                        const verifiersCell = document.createElement('td');
+                        verifiersCell.textContent = block.blockVerifiers.map(v => v.verifierId).join(', ');
+                        row.appendChild(verifiersCell);
+
+                        blocksTableBody.appendChild(row);
+                    });
+                } else {
+                    console.error('Failed to fetch blocks:', data.message);
+                }
+            } catch (error) {
+                console.error('Error fetching blocks:', error);
+            }
+        }
+
+        // Fetch recent blocks on page load
+        fetchRecentBlocks();
+    </script>
+</body>
+</html>
