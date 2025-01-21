@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Posts Selection</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/10.5.0/jsrsasign-all-min.js"></script>
+    <style>
+        #postsContainer, #selectedList {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow-y: auto;
+            height: 300px;
+        }
+        .post {
+            margin-bottom: 5px;
+        }
+        button {
+            margin-top: 10px;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .column {
+            width: calc(50% - 10px); /* Fixed width: half of the display area minus gap */
+            height: 80vh; /* Fixed height */
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            overflow-y: auto; /* Enable vertical scrolling for the column */
+        }
+
+        .column h1, .column h2 {
+            margin: 10px;
+            text-align: center;
+        }
+
+        .post {
+            display: flex;
+            align-items: center;
+            margin: 0px 3px;
+            padding: 1px;
+            white-space: nowrap; /* Prevent line wrapping */
+            border-bottom: 1px solid #eee;
+        }
+
+        .checkbox {
+            margin-right: 10px;
+        }
+
+        #selectedList {
+            white-space: nowrap; /* Prevent line wrapping */
+            overflow-x: auto; /* Enable horizontal scrolling */
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f0f8ff;
+        }
+
+        #selectedText {
+            white-space: nowrap; /* Preserve newlines */
+			overflow-x: auto; /* Enable horizontal scrolling */
+        }
+    </style>
+</head>
+<body>
+    <div class="column">
+        <h1>All Posts</h1>
+        <div id="postsContainer">
+            <!-- Posts with checkboxes will be loaded here -->
+        </div>
+    </div>
+    <div class="column">
+		<div id="selectedList">
+		<h2>Selected Posts</h2>
+		<button id="clearButton" onclick="clearSelectedPosts()">Clear All</button>
+		<pre id="selectedText">No posts selected</pre>
+		</div>
+		<button id="verifyButton">Verify Signatures</button>
+		<p id="verificationResults"></p>
+    </div>
+	
+
+
+	<script>
+		const url = "https://choucoin-posts-4f7c7496eb49.herokuapp.com/posts"; // Correct endpoint for fetching posts
+
+		let selectedPosts = []; // Array to keep track of selected posts
+		let allPosts = []; // Store all posts in original order
+
+<<<<<<< HEAD
+            // Send POST request to backend to submit the post
+            const response = await fetch(`${url}submit-post`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ content }),
+            });
+=======
+		async function loadPosts() {
+			try {
+				const response = await fetch(url); // Fetch posts from your backend
+				if (!response.ok) {
+					throw new Error('Failed to fetch posts');
+				}
+				allPosts = await response.json(); // Parse the JSON response
+				const postsContainer = document.getElementById('postsContainer');
+				postsContainer.innerHTML = ''; // Clear existing posts
+>>>>>>> 7db3755 (trying to merge with heom computer)
+
+				allPosts.forEach(post => {
+					const postDiv = document.createElement('div');
+					postDiv.className = "post";
+					const postId = `post-${post._id}`; // Unique ID for the checkbox
+					postDiv.innerHTML = `
+						<input type="checkbox" class="checkbox" id="${postId}" onchange="togglePost('${post._id}', this)">
+						<label for="${postId}">
+							<p>${post.content}</p>
+						</label>
+					`;
+					postDiv.dataset.content = post.content; // Store the post content for reference
+					postsContainer.appendChild(postDiv);
+				});
+			} catch (error) {
+				console.error('Error loading posts:', error);
+			}
+		}
+
+		function togglePost(postId, checkbox) {
+			const post = allPosts.find(p => p._id === postId); // Find the post by ID
+			if (post) {
+				if (checkbox.checked) {
+					// Add the post content to the selectedPosts array if not already included
+					if (!selectedPosts.includes(post.content)) {
+						selectedPosts.push(post.content);
+					}
+				} else {
+					// Remove the post content from the selectedPosts array
+					selectedPosts = selectedPosts.filter(content => content !== post.content);
+				}
+			}
+			updateSelectedText();
+		}
+
+		function updateSelectedText() {
+			// Sort selectedPosts by their order in allPosts
+			const sortedSelectedPosts = selectedPosts.sort((a, b) => {
+				const indexA = allPosts.findIndex(post => post.content === a);
+				const indexB = allPosts.findIndex(post => post.content === b);
+				return indexA - indexB;
+			});
+
+			const selectedText = sortedSelectedPosts.join('\n'); // Concatenate selected posts with newlines
+			const selectedTextBox = document.getElementById('selectedText');
+			selectedTextBox.textContent = selectedText || 'No posts selected';
+			selectedTextBox.style.whiteSpace = 'pre-wrap'; // Ensure newlines display properly
+		}
+
+		// need to make place people can sign up their name and public key, then the verify function can look up the name and N for them.
+
+
+		verifyButton.addEventListener('click', () => {
+            let results = [];
+            selectedPosts.forEach(post => {
+                const content = post.content.split(',')[0].trim(); // Extract content before the comma
+                const signature = post.signature;
+                const publicKey = post.publicKey;
+
+                // Hash the content
+                const hashHex = KJUR.crypto.Util.sha256(content);
+
+                // Verify the signature
+                const rsa = new RSAKey();
+                rsa.setPublic(publicKey, '10001'); // '10001' is hex for 65537
+                const isValid = rsa.verifyHex(hashHex, signature);
+
+                results.push(`Post: "${content}" - Signature is ${isValid ? 'valid' : 'invalid'}`);
+			});
+            verificationResults.textContent = results.join('\n');
+        });
+
+<<<<<<< HEAD
+        // Function to load and display posts
+        async function loadPosts() {
+            try {
+                const response = await fetch(`${url}posts`);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch posts: ${response.status}`);
+                }
+=======
+		function clearSelectedPosts() {
+			// Clear selected posts array
+			selectedPosts = [];
+>>>>>>> 7db3755 (trying to merge with heom computer)
+
+			// Uncheck all checkboxes
+			const checkboxes = document.querySelectorAll('.checkbox');
+			checkboxes.forEach(checkbox => {
+				checkbox.checked = false;
+			});
+
+<<<<<<< HEAD
+                posts.forEach(post => {
+                    const postDiv = document.createElement('div');
+                    postDiv.innerHTML = `
+                        <p>${post.content}</p>
+                        <small>Posted on ${new Date(post.timestamp).toLocaleString()}</small>
+                    `;
+                    postsContainer.appendChild(postDiv);
+                });
+            } catch (error) {
+                console.error('Error loading posts:', error);
+            }
+        }
+=======
+			// Update the selected posts text box
+			updateSelectedText();
+		}
+>>>>>>> 7db3755 (trying to merge with heom computer)
+
+		// Load posts when the page loads
+		loadPosts();
+    </script>
+</body>
+</html>
