@@ -61,23 +61,28 @@ async function loadPostsToVerify() {
         transactions.forEach(post => {
             const postDiv = document.createElement('div');
             postDiv.classList.add('post-item');
+            console.log('signature:', post.signedHash);
 
             // Create the HTML structure for each post
             postDiv.innerHTML = `
                 <p>${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime}, signed: ${post.signedHash}</p>
-                <small>Posted on ${new Date(post.timestamp).toLocaleString()}</small>
-                
                 <div class="actions">
                     <!-- Verify Button -->
-                    <button class="verify-btn" data-user-id="${post.sender}" data-post-sig="${post.signature}">
+                    <button 
+                        class="verify-btn" 
+                        data-user-id="${post.sender}" 
+                        data-post-sig="${post.signedHash}" 
+                        data-user-pubkey="${post.publicKey}">
                         Verify Post
                     </button>
                     
                     <!-- Block Inclusion Dropdown -->
-                    <select class="block-dropdown"  data-user-id="${post.sender}" data-post-sig="${post.signature}">
+                    <select class="block-dropdown"  data-user-id="${post.sender}" data-post-sig="${post.signedHash}">
+						<option value="" disabled selected>Select One</option>
                         <option value="include">Include in Block</option>
                         <option value="exclude">Do Not Include in Block</option>
                     </select>
+                    <pre id="verification-text" class="output-box">Waiting to be verified...</pre>
                 </div>
             `;
 
@@ -86,19 +91,18 @@ async function loadPostsToVerify() {
 
             // Add event listener for the verify button
             const verifyButton = postDiv.querySelector('.verify-btn');
+            const verificationText = postDiv.querySelector('#verification-text'); // Get the <pre> element
+
             verifyButton.addEventListener('click', async () => {
+				// Prevent page reload (in case it's inside a form)
+				event.preventDefault();  // This will prevent the default button behavior (form submission)
+
                 const userId = verifyButton.getAttribute('data-user-id');
                 const sigId = verifyButton.getAttribute('data-post-sig');
-
-                // Fetch the user's public key (assuming fetchUserPublicKey returns BigInt N)
-                const userKey = await fetchUserPublicKey(userId);
-                if (!userKey) {
-                    alert('Failed to fetch user public key');
-                    return;
-                }
+                const userKey = verifyButton.getAttribute('data-user-pubkey');
 
                 // Decrypt the signature (verify the signature)
-                const decryptedSignature = modPow(sigId, 65537, userKey);
+                const decryptedSignature = modPow(BigInt(sigId), BigInt(65537), BigInt(userKey));
 
                 // Redo hash of the transaction to compare with decrypted signature
                 const hashInput = `${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime}`;
@@ -109,11 +113,15 @@ async function loadPostsToVerify() {
 
                 // Compare the decrypted signature with the hash
                 if (decryptedSignature === hashBigInt) {
-                    alert('Post verified successfully');
+                    // Update the <pre> element with success message
+                    verificationText.textContent = `Post verified successfully.`;
                 } else {
-                    alert('Failed to verify the post');
+                    // Update the <pre> element with failure message
+                    verificationText.textContent = `Failed to verify the post.`;
                 }
             });
+
+            console.log('Verify Button:', verifyButton);
             
             // Add event listener for the block inclusion dropdown
             const blockDropdown = postDiv.querySelector('.block-dropdown');
@@ -143,7 +151,8 @@ async function loadPostsToVerify() {
 
 async function fetchUserPublicKey(userID) {
     try {
-        const response = await fetch(`${herokuBackendUrl}save-user-data/${userID}`);
+        const response = await fetch(`${herokuBackendUrl}fetch-block/${userID}`);
+		console.log("Fetching public key from URL:", url);  // Debug the URL
         
         if (!response.ok) {
             throw new Error(`Failed to fetch public key: ${response.status}`);

@@ -37,6 +37,23 @@
     margin-top: 20px;
 }
 
+#table-wrapper {
+  width: 100%; /* Ensure it takes up the full container width */
+  overflow-x: auto; /* Enable horizontal scrolling when content overflows */
+  margin-bottom: 20px; /* Optional: adds space below the table */
+}
+
+#users-table {
+  width: 100%; /* Ensures the table takes full width of the container */
+  min-width: 600px; /* Optional: set a minimum width for the table to prevent it from being too narrow */
+  border-collapse: collapse; /* Optional: removes double borders */
+}
+
+#users-table th, #users-table td {
+  padding: 8px; /* Adjust padding for better readability */
+  text-align: left; /* Align text to the left */
+}
+
 </style>
 </head>
 <body>
@@ -89,20 +106,23 @@
     <button type="submit">Register</button>
   </form>
 
-  <p id="response"></p>
+  <p id="response-message"></p>
 
   <h1>Registered Users</h1>
-  <table border="1" id="users-table">
-    <thead>
-      <tr>
-        <th>User ID</th>
-        <th>Public Key (N)</th>
-      </tr>
-    </thead>
-    <tbody id="usersTableBody">
-      <!-- User data will be dynamically inserted here -->
-    </tbody>
-  </table>
+	<!-- Wrapper to make the table scrollable -->
+	<div id="table-wrapper" style="overflow-x: auto; width: 100%;">
+	  <table border="1" id="users-table" style="width: 100%;">
+		<thead>
+		  <tr>
+			<th>User ID</th>
+			<th>Public Key (N)</th>
+		  </tr>
+		</thead>
+		<tbody id="usersTableBody">
+		  <!-- User data will be dynamically inserted here -->
+		</tbody>
+	  </table>
+	</div>
 
     <!-- Link to external JavaScript file -->
     <script src="./assets/js/key-registration.js"></script>

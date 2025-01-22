@@ -2,7 +2,7 @@ main:
   - title: "Home"
     url: "/"
   - title: "Choucoin&copy; tools"
-    url: "/choucoin/"
+    url: "/choucoin"
 #  - title: "Blog"
 #    url: "/blog/"
 #    children:
