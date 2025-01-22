@@ -5,5 +5,10 @@ main:
     url: "/about/"
   - title: "Blog"
     url: "/blog/"
+    children:
+      - title: "Posts"
+        url: "/blog/posts/"
+      - title: "Categories"
+        url: "/blog/categories/"
   - title: "Projects"
     url: "/projects/"
