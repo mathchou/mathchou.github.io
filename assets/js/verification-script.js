@@ -73,31 +73,6 @@ async function generateHash(input) {
     return hashHex;
 }
 
-// Function to fetch the user's public key based on their userID
-async function fetchUserPublicKey(userID) {
-    try {
-        const response = await fetch(`${url}save-user-data/:${userID}`);
-        
-        if (!response.ok) {
-            throw new Error(`Failed to fetch public key: ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        // Assuming the response contains the public key in 'N' field
-        const publicKey = data.N;
-
-        if (publicKey) {
-            console.log('User Public Key:', N);
-            return N;
-        } else {
-            console.error('No public key found for the user');
-        }
-
-    } catch (error) {
-        console.error('Error fetching user public key:', error);
-    }
-}
 
 async function fetchSingleUserFromBackend() {
     try {
@@ -114,92 +89,124 @@ async function fetchSingleUserFromBackend() {
     }
 }
 
-
-
-// Function to load and display posts with verification and block inclusion
 async function loadPostsToVerify() {
-	try {
-		const response = await fetch(`${herokuBackendUrl}posts`);
-		if (!response.ok) {
-			throw new Error(`Failed to fetch posts: ${response.status}`);
-		}
+    try {
+        const response = await fetch(`${herokuBackendUrl}posts`);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch posts: ${response.status}`);
+        }
 
-		const posts = await response.json();
-		const postsContainer = document.getElementById('postsContainer');
-		postsContainer.innerHTML = ''; // Clear existing posts
+        const transactions = await response.json();
+        const postsContainer = document.getElementById('postsContainer');
+        postsContainer.innerHTML = ''; // Clear existing posts
 
-		posts.forEach(post => {
-			const postDiv = document.createElement('div');
-			const post_info = parseTransaction(post.content);
-			postDiv.classList.add('post-item');
+        transactions.forEach(post => {
+            const postDiv = document.createElement('div');
+            const post_info = parseTransaction(post.content);
+            postDiv.classList.add('post-item');
 
-			// Create the HTML structure for each post
-			postDiv.innerHTML = `
-				<p>${post.content}</p>
-				<small>Posted on ${new Date(post.timestamp).toLocaleString()}</small>
-				
-				<div class="actions">
-					<!-- Verify Button -->
-					<button class="verify-btn" data-user-id="${post_info.sender}" data-post-sig="${post_info.signature}">
-						Verify Post
-					</button>
-					
-					<!-- Block Inclusion Dropdown -->
-					<select class="block-dropdown"  data-user-id="${post_info.sender}" data-post-sig="${post_info.signature}">
-						<option value="include">Include in Block</option>
-						<option value="exclude">Do Not Include in Block</option>
-					</select>
-				</div>
-			`;
+            // Create the HTML structure for each post
+            postDiv.innerHTML = `
+                <p>${post.content}</p>
+                <small>Posted on ${new Date(post.timestamp).toLocaleString()}</small>
+                
+                <div class="actions">
+                    <!-- Verify Button -->
+                    <button class="verify-btn" data-user-id="${post_info.sender}" data-post-sig="${post_info.signature}">
+                        Verify Post
+                    </button>
+                    
+                    <!-- Block Inclusion Dropdown -->
+                    <select class="block-dropdown"  data-user-id="${post_info.sender}" data-post-sig="${post_info.signature}">
+                        <option value="include">Include in Block</option>
+                        <option value="exclude">Do Not Include in Block</option>
+                    </select>
+                </div>
+            `;
 
-			// Append the post to the container
-			postsContainer.appendChild(postDiv);
+            // Append the post to the container
+            postsContainer.appendChild(postDiv);
 
-			// Add event listener for the verify button
-			const verifyButton = postDiv.querySelector('.verify-btn');
-			verifyButton.addEventListener('click', async () => {
-				const userId = verifyButton.getAttribute('data-user-id');
-				const sigId = verifyButton.getAttribute('data-post-sig');
-				const userKey = fetchUserPublicKey(userId)
-				
-				// unsign hash from user
-				const undoHash = modPow(sigID, 65537, userKey)
-				
-				// redo hash of transaction
-				const hashInput = `${post_info.sender} sends ${post_info.amount} Choucoin to ${post_info.receiver} for ${post_info.comment} on ${post_info.datetime}`;
-				const hash = await generateHash(hashInput);
+            // Add event listener for the verify button
+            const verifyButton = postDiv.querySelector('.verify-btn');
+            verifyButton.addEventListener('click', async () => {
+                const userId = verifyButton.getAttribute('data-user-id');
+                const sigId = verifyButton.getAttribute('data-post-sig');
 
-				if (undoHash == hash) {
-					alert('Post verified successfully');
-				} else {
-					alert('Failed to verify the post');
-				}
-			});
-			
-			// Add event listener for the block inclusion dropdown
-			const blockDropdown = postDiv.querySelector('.block-dropdown');
-			blockDropdown.addEventListener('change', () => {
-				const action = blockDropdown.value;
+                // Fetch the user's public key (assuming fetchUserPublicKey returns BigInt N)
+                const userKey = await fetchUserPublicKey(userId);
+                if (!userKey) {
+                    alert('Failed to fetch user public key');
+                    return;
+                }
 
-				if (action === 'include') {
-					// Add the transaction to the selectedPosts array if not already included
-					if (!selectedPosts.some(p => p._id === post._id)) {
-						selectedPosts.push(post);
-					}
-				} else if (action === 'exclude') {
-					// Remove the transaction from the selectedPosts array
-					selectedPosts = selectedPosts.filter(p => p._id !== post._id);
-				}
+                // Decrypt the signature (verify the signature)
+                const decryptedSignature = modPow(sigId, 65537, userKey);
 
-				// Sort selectedPosts by datetime (most recent to least recent)
-				selectedPosts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                // Redo hash of the transaction to compare with decrypted signature
+                const hashInput = `${post_info.sender} sends ${post_info.amount} Choucoin to ${post_info.receiver} for ${post_info.comment} on ${post_info.datetime}`;
+                const hash = await generateHash(hashInput);
 
-				console.log('Selected Posts (sorted):', selectedPosts);
-			});
-		});
-	} catch (error) {
-		console.error('Error loading posts:', error);
-	}
+                // Convert hash from hex to BigInt
+                const hashBigInt = BigInt('0x' + hash);
+
+                // Compare the decrypted signature with the hash
+                if (decryptedSignature === hashBigInt) {
+                    alert('Post verified successfully');
+                } else {
+                    alert('Failed to verify the post');
+                }
+            });
+            
+            // Add event listener for the block inclusion dropdown
+            const blockDropdown = postDiv.querySelector('.block-dropdown');
+            blockDropdown.addEventListener('change', () => {
+                const action = blockDropdown.value;
+
+                if (action === 'include') {
+                    // Add the transaction to the selectedPosts array if not already included
+                    if (!selectedPosts.some(p => p._id === post._id)) {
+                        selectedPosts.push(post);
+                    }
+                } else if (action === 'exclude') {
+                    // Remove the transaction from the selectedPosts array
+                    selectedPosts = selectedPosts.filter(p => p._id !== post._id);
+                }
+
+                // Sort selectedPosts by datetime (most recent to least recent)
+                selectedPosts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                console.log('Selected Posts (sorted):', selectedPosts);
+            });
+        });
+    } catch (error) {
+        console.error('Error loading posts:', error);
+    }
 }
+
+async function fetchUserPublicKey(userID) {
+    try {
+        const response = await fetch(`${herokuBackendUrl}save-user-data/${userID}`);
+        
+        if (!response.ok) {
+            throw new Error(`Failed to fetch public key: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // Assuming the response contains the public key in 'N' field (as a string or BigInt)
+        const publicKey = data.N;
+
+        if (publicKey) {
+            console.log('User Public Key:', publicKey);
+            return BigInt(publicKey); // Ensure it's returned as BigInt for modulus operation
+        } else {
+            console.error('No public key found for the user');
+        }
+    } catch (error) {
+        console.error('Error fetching user public key:', error);
+    }
+}
+
 
 loadPostsToVerify();

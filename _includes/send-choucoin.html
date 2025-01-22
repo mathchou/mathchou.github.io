@@ -32,12 +32,40 @@
 }
 
 
-#postsContainer div {
-	margin-bottom: 15px;
-	padding: 10px;
-	border: 1px solid #ddd;
-	border-radius: 5px;
-	background-color: #f9f9f9;
+#postsContainer {
+    width: 80%;
+    margin: 20px auto;
+}
+
+.transaction {
+    position: relative;  /* Needed for absolute positioning of the copy button */
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.copyButton {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: transparent;
+    border: 1px solid #ccc;
+    padding: 5px;
+    cursor: pointer;
+    display: none;  /* Initially hidden */
+}
+
+.transaction:hover .copyButton {
+    display: block;  /* Show the copy button when the transaction div is hovered */
+}
+
+.transactionText {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: monospace;
+}
 }
 
 </style>
@@ -71,20 +99,28 @@
 
     <!-- Scrollable output box with copy button inside -->
     <div id="resultContainer">
-        <pre id="resultText"></pre>
+		<textarea id="resultText" rows="10" cols="50" readonly></textarea>
 	</div>	
 	
 	<hr>
 	
-	<button type="submit">Submit Transaction</button>
+	<button id="submitTransactionButton">Submit Transaction</button>
 	<br><br>
 	<hr>
 	
 	Note: to sign up as a candidate, generate a transaction of the appropriate amount (starting at 1CC per slot, doubling each time penalized) to the Receiver ID "THE ABYSS" with comment "candidate sign up".
 
+	<br><br>
+
 	<h2>Previous Transactions</h2>
+	
+	Signature left off for ease of viewing. See <a href="./all-transactions.html">this page here</a> for full transaction details.
+	
+	<br><br>
+	<hr>
+	
 	<form id="postForm">
-    <div id="postsContainer">
+    <div id="transactionsContainer">
         <!-- Posts will be displayed here -->
     </div>
     </form>
@@ -92,64 +128,8 @@
 
 	
     <!-- Link to external JavaScript file -->
-    <script src="./assets/js/script.js"></script>
-	<script>
-        const url = "https://choucoin-posts-4f7c7496eb49.herokuapp.com/";
-
-        // Function to handle form submission
-        document.getElementById('postForm').addEventListener('submit', async function(event) {
-            event.preventDefault();
-
-            const content = document.getElementById('content').value;
-            if (!content) return;
-
-            // Send POST request to backend to submit the post
-            const response = await fetch(`${url}submit-post`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ content }),
-            });
-
-            if (response.ok) {
-                alert('Post submitted successfully!');
-                document.getElementById('content').value = '';  // Clear the form
-                loadPosts();  // Reload the posts list
-            } else {
-                const data = await response.json();
-                alert('Error: ' + data.error);
-            }
-        });
-
-        // Function to load and display posts
-        async function loadPosts() {
-            try {
-                const response = await fetch(`${url}posts`);
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch posts: ${response.status}`);
-                }
-
-                const posts = await response.json();
-                const postsContainer = document.getElementById('postsContainer');
-                postsContainer.innerHTML = ''; // Clear existing posts
-
-                posts.forEach(post => {
-                    const postDiv = document.createElement('div');
-                    postDiv.innerHTML = `
-                        <p>${post.content}</p>
-                        <small>Posted on ${new Date(post.timestamp).toLocaleString()}</small>
-                    `;
-                    postsContainer.appendChild(postDiv);
-                });
-            } catch (error) {
-                console.error('Error loading posts:', error);
-            }
-        }
-
-        // Initial load of posts
-        loadPosts();
-    </script>
+    <script src="./assets/js/transaction-script.js"></script>
+	<script></script>
 	
 </body>
 </html>

@@ -1,5 +1,22 @@
 let N = null;
 let d = null;
+let signature= null;
+
+const form = document.getElementById('postForm');
+
+
+// Modular exponentiation (a^b % c) using BigInt
+function modPow(a, b, c) {
+    let result = 1n;
+    a = a % c;
+    while (b > 0n) {
+        if (b % 2n === 1n) result = (result * a) % c;
+        b = b / 2n;
+        a = (a * a) % c;
+    }
+    return result;
+}
+
 
 // File upload handler: Parse N and d from the uploaded file
 document.getElementById('fileInput').addEventListener('change', function(event) {
@@ -73,7 +90,7 @@ async function generateTransaction() {
     const hashBigInt = BigInt('0x' + hash);
 
     // Sign the hash using RSA private key (modular exponentiation)
-    const signature = modPow(hashBigInt, d, N);
+    signature = modPow(hashBigInt, d, N);
 
     // Create the transaction sentence
     const transactionSentence = `${sender} sends ${amount} Choucoin to ${receiver} for ${comment} on ${datetime}, signed: ${signature}`;
@@ -112,104 +129,110 @@ function copyToClipboard() {
 }
 
 
-// Function to parse the transaction string
-function parseTransaction(transactionText) {
-    const regex = /^(\w+) sends (\d+) Choucoin to (\w+) for ([^ on]+) on (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}), signed: (\d+)$/;
-    const match = transactionText.match(regex);
-    
-    if (!match) {
-        throw new Error("Transaction format is invalid.");
-    }
-
-    return {
-        sender: match[1],
-        amount: match[2],
-        receiver: match[3],
-        comment: match[4],
-        datetime: match[5],
-        signature: BigInt(match[6]),
-    };
-}
-
-async function verifySignature(transactionText, senderPublicKeyN, senderPublicKeyE) {
-    const transactionData = parseTransaction(transactionText);
-
-    // Generate the hash of the input
-    const hashInput = `${transactionData.sender} sends ${transactionData.amount} Choucoin to ${transactionData.receiver} for ${transactionData.comment} on ${transactionData.datetime}`;
-    const hash = await generateHash(hashInput);
-
-    // Convert the hash to a BigInt for modular exponentiation
-    const hashBigInt = BigInt('0x' + hash);
-
-    // Decrypt the signature (verify the signature) using the sender's public key (N, e)
-    const decryptedSignature = modPow(transactionData.signature, senderPublicKeyE, senderPublicKeyN);
-
-    // Check if the decrypted signature matches the hash
-    if (decryptedSignature === hashBigInt) {
-        console.log("Signature is valid.");
-        return true;
-    } else {
-        console.log("Signature is invalid.");
-        return false;
-    }
-}
 
 
 const herokuBackendUrl = 'https://choucoin-posts-4f7c7496eb49.herokuapp.com/';  // Replace with your actual Heroku app URL
 
-// Example of submitting a new post (POST request)
-document.getElementById('postForm').addEventListener('submit', async function(event) {
-    event.preventDefault();
+// Function to submit a new transaction
+async function submitTransaction() {
+    // Get values from the input fields
+    const sender = document.getElementById('sender').value.trim();
+    const receiver = document.getElementById('receiver').value.trim();
+    const amount = document.getElementById('amount').value.trim();
+    const comment = document.getElementById('comment').value.trim();
+    const datetime = new Date().toISOString(); // Generate current datetime in ISO format
+    const signedHash = signature.toString();
+    const publicKey = N.toString();
 
-    const content = document.getElementById('content').value;
-    if (!content) return;
-
-    // Send POST request to backend (Heroku)
-    const response = await fetch(`${herokuBackendUrl}submit-post`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ content })
-    });
-
-    const data = await response.json();
-    if (response.ok) {
-        alert('Post submitted successfully!');
-        document.getElementById('content').value = '';  // Clear the form
-        loadPosts();  // Reload the posts list
-    } else {
-        alert('Error: ' + data.error);
+    // Validate the inputs
+    if (!sender || !receiver || !amount || !comment || !signedHash || !publicKey) {
+        alert("All fields are required!");
+        return;
     }
-});
 
-// Function to load and display posts
-async function loadPosts() {
-	try {
-		const response = await fetch(`${herokuBackendUrl}posts`);
-		if (!response.ok) {
-			throw new Error(`Failed to fetch posts: ${response.status}`);
-		}
+    // Create the transaction payload
+    const transactionPayload = {
+        sender,
+        receiver,
+        amount: parseFloat(amount), // Convert amount to a number
+        comment,
+        datetime,
+        signedHash,
+        publicKey
+    };
 
-		const posts = await response.json();
-		const postsContainer = document.getElementById('postsContainer');
-		postsContainer.innerHTML = ''; // Clear existing posts
+    try {
+        // Send POST request to the backend
+        const response = await fetch(`${herokuBackendUrl}add-transaction`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(transactionPayload),
+        });
 
-		posts.forEach(post => {
-			const postDiv = document.createElement('div');
-			postDiv.innerHTML = `
-				<p>${post.content}</p>
-				<small>Posted on ${new Date(post.timestamp).toLocaleString()}</small>
-			`;
-			postsContainer.appendChild(postDiv);
-		});
-	} catch (error) {
-		console.error('Error loading posts:', error);
-	}
+        // Handle the response
+        if (response.ok) {
+            const responseData = await response.json();
+            alert(`Transaction submitted successfully! Transaction ID: ${responseData.transaction._id}`);
+        } else {
+            const errorData = await response.json();
+            alert(`Error submitting transaction: ${errorData.error}`);
+        }
+    } catch (error) {
+        console.error('Error submitting transaction:', error);
+        alert(`An error occurred: ${error.message}`);
+    }
 }
 
+// Event listener for the "Submit Transaction" button
+// Add an event listener to the "Submit Transaction" button
+document.getElementById('submitTransactionButton').addEventListener('click', submitTransaction);
 
-// Load posts on page startup
-loadPosts();
+
+// Function to fetch and display all transactions
+async function fetchAndDisplayTransactions() {
+    try {
+        // Fetch all transactions from the backend
+        const response = await fetch(`${herokuBackendUrl}get-transactions`);
+
+        // Check if the response is okay
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Error fetching transactions: ${errorData.error}`);
+        }
+
+        // Parse the response JSON
+        const transactions = await response.json();
+
+
+        // Check if transactions exist
+        if (!transactions || transactions.length === 0) {
+            document.getElementById('transactionsContainer').innerHTML = '<p>No transactions found.</p>';
+            return;
+        }
+
+        // Parse and format transactions
+        const transactionSentences = transactions.map(tx => {
+            return `${tx.sender} sends ${tx.amount} Choucoin to ${tx.receiver} for ${tx.comment} on ${tx.datetime}`;
+        });
+
+        // Display the transactions in a container
+        const transactionsContainer = document.getElementById('transactionsContainer');
+        transactionsContainer.innerHTML = ''; // Clear the container
+        transactionSentences.forEach(sentence => {
+            const p = document.createElement('p');
+            p.textContent = sentence;
+            transactionsContainer.appendChild(p);
+        });
+    } catch (error) {
+        console.error('Error fetching transactions:', error);
+        document.getElementById('transactionsContainer').innerHTML = `<p>Error: ${error.message}</p>`;
+    }
+}
+
+// Call the function on page load
+fetchAndDisplayTransactions();
+
 
 

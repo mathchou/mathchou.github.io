@@ -10,7 +10,7 @@ layout: default
 2. Creating and Signing transactions tool: [Transaction Creator](./send-choucoin.html)
   - Here you will find a tool that can be used to send Choucoin
   - Note that the signature algorithm uses SHA-256 to hash the transaction message, then appends ",signed: {RSA-signed hash}"
-3. Verifying transactions: [Verification tool](./verify_trans.html)
+3. Verifying transactions: [Verification tool](./verify-trans.html)
   - Here is a tool that can verify transactions
   - It is linked to the user registration list posted [here](./generateRSAkeypair.html)
   - You may choose to verify transactions manually by hashing the transaction message (SHA-256) and checking the digital signature of the sender (e=65537)
