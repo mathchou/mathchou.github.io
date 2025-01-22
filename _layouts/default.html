@@ -15,12 +15,6 @@
 
     {% include head-custom.html %}
   </head>
-  <style>
-  .active {
-	  color: gold;
-	  cursor: default;
-	}
-  </style>
   <body>
 
       <header>
@@ -37,22 +31,18 @@
 
     <div class="wrapper">
       <nav>
-        <ul>
-		{% for item in site.data.navigation.main %}
+        {% for item in site.data.navigation.main %}
 		  <li>
-			<a href="{{ item.url }}" {% if page.url == item.url %}class="active"{% endif %}>{{ item.title }}</a>
+			<a href="{{ item.url }}" >{{ item.title }}</a>
 			{% if item.children %}
-			  <ul>
 				{% for child in item.children %}
 				  <li>
-					<a href="{{ child.url }}" {% if page.url == child.url %}class="active"{% endif %}>{{ child.title }}</a>
+					<a href="{{ child.url }}" >{{ child.title }}</a>
 				  </li>
 				{% endfor %}
-			  </ul>
 			{% endif %}
 		  </li>
 		{% endfor %}
-		</ul>
       </nav>
       <section>
         {{ content }}

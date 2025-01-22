@@ -2,48 +2,6 @@ const herokuBackendUrl = 'https://choucoin-posts-4f7c7496eb49.herokuapp.com/';
 
 let selectedPosts = [];
 
-// Function to parse the transaction string
-function parseTransaction(transactionText) {
-    const regex = /^(\w+) sends (\d+) Choucoin to (\w+) for ([^ on]+) on (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}), signed: (\d+)$/;
-    const match = transactionText.match(regex);
-    
-    if (!match) {
-        throw new Error("Transaction format is invalid.");
-    }
-
-    return {
-        sender: match[1],
-        amount: match[2],
-        receiver: match[3],
-        comment: match[4],
-        datetime: match[5],
-        signature: BigInt(match[6]),
-    };
-}
-
-async function verifySignature(transactionText, senderPublicKeyN, senderPublicKeyE) {
-    const transactionData = parseTransaction(transactionText);
-
-    // Generate the hash of the input
-    const hashInput = `${transactionData.sender} sends ${transactionData.amount} Choucoin to ${transactionData.receiver} for ${transactionData.comment} on ${transactionData.datetime}`;
-    const hash = await generateHash(hashInput);
-
-    // Convert the hash to a BigInt for modular exponentiation
-    const hashBigInt = BigInt('0x' + hash);
-
-    // Decrypt the signature (verify the signature) using the sender's public key (N, e)
-    const decryptedSignature = modPow(transactionData.signature, senderPublicKeyE, senderPublicKeyN);
-
-    // Check if the decrypted signature matches the hash
-    if (decryptedSignature === hashBigInt) {
-        console.log("Signature is valid.");
-        return true;
-    } else {
-        console.log("Signature is invalid.");
-        return false;
-    }
-}
-
 
 // Modular exponentiation (a^b % c) using BigInt
 function modPow(a, b, c) {
@@ -91,9 +49,9 @@ async function fetchSingleUserFromBackend() {
 
 async function loadPostsToVerify() {
     try {
-        const response = await fetch(`${herokuBackendUrl}posts`);
+        const response = await fetch(`${herokuBackendUrl}get-transactions`);
         if (!response.ok) {
-            throw new Error(`Failed to fetch posts: ${response.status}`);
+            throw new Error(`Failed to fetch transactions: ${response.status}`);
         }
 
         const transactions = await response.json();
@@ -102,22 +60,21 @@ async function loadPostsToVerify() {
 
         transactions.forEach(post => {
             const postDiv = document.createElement('div');
-            const post_info = parseTransaction(post.content);
             postDiv.classList.add('post-item');
 
             // Create the HTML structure for each post
             postDiv.innerHTML = `
-                <p>${post.content}</p>
+                <p>${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime}, signed: ${post.signedHash}</p>
                 <small>Posted on ${new Date(post.timestamp).toLocaleString()}</small>
                 
                 <div class="actions">
                     <!-- Verify Button -->
-                    <button class="verify-btn" data-user-id="${post_info.sender}" data-post-sig="${post_info.signature}">
+                    <button class="verify-btn" data-user-id="${post.sender}" data-post-sig="${post.signature}">
                         Verify Post
                     </button>
                     
                     <!-- Block Inclusion Dropdown -->
-                    <select class="block-dropdown"  data-user-id="${post_info.sender}" data-post-sig="${post_info.signature}">
+                    <select class="block-dropdown"  data-user-id="${post.sender}" data-post-sig="${post.signature}">
                         <option value="include">Include in Block</option>
                         <option value="exclude">Do Not Include in Block</option>
                     </select>
@@ -144,7 +101,7 @@ async function loadPostsToVerify() {
                 const decryptedSignature = modPow(sigId, 65537, userKey);
 
                 // Redo hash of the transaction to compare with decrypted signature
-                const hashInput = `${post_info.sender} sends ${post_info.amount} Choucoin to ${post_info.receiver} for ${post_info.comment} on ${post_info.datetime}`;
+                const hashInput = `${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime}`;
                 const hash = await generateHash(hashInput);
 
                 // Convert hash from hex to BigInt
