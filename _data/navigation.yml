@@ -3,6 +3,14 @@ main:
     url: "/"
   - title: "Choucoin&copy; tools"
     url: "/choucoin"
+    children:
+      - title: "Register"
+        url: "/generateRSAkeypair"
+      - title: "Transact"
+        url: "/send-choucoin"
+      - title: "Verify"
+        url: "/verify-trans"
+      
 #  - title: "Blog"
 #    url: "/blog/"
 #    children:

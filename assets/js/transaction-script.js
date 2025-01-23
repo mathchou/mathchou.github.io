@@ -1,5 +1,6 @@
 let N = null;
 let d = null;
+let userId = null;
 let signature= null;
 
 const form = document.getElementById('postForm');
@@ -18,7 +19,7 @@ function modPow(a, b, c) {
 }
 
 
-// File upload handler: Parse N and d from the uploaded file
+// File upload handler: Parse userId, N, and d from the uploaded file
 document.getElementById('fileInput').addEventListener('change', function(event) {
     const file = event.target.files[0];
     if (file && file.type === 'text/plain') {
@@ -44,9 +45,10 @@ document.getElementById('fileInput').addEventListener('change', function(event) 
             // Extract N and d from the parsed variables
             N = parsedVariables['N'];
             d = parsedVariables['d'];
+			userId = parsedVariables['userId'];
 
             if (!N || !d) {
-                alert("Please upload a valid file with N and d.");
+                alert("Please upload a valid file with N, d, and userId.");
                 return;
             }
 			
@@ -60,13 +62,13 @@ document.getElementById('fileInput').addEventListener('change', function(event) 
 // Function to generate and display the transaction string when the button is clicked
 async function generateTransaction() {
     // Check if N and d are loaded
-    if (!N || !d) {
-        alert("Please upload the file with N and d before generating the transaction.");
+    if (!N || !d || !userId) {
+        alert("Please upload the file with User ID, N, and d before generating the transaction.");
         return;
     }
 
     // Get values from input fields
-    const sender = document.getElementById('sender').value;
+    const sender = userID.toString();
     const receiver = document.getElementById('receiver').value;
     const amount = document.getElementById('amount').value;
     const comment = document.getElementById('comment').value;

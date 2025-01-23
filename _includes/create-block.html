@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recent Blocks</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 300px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -150px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+		/* Style for the result container */
+		#resultContainer {
+			position: relative; /* Positioning context for the button */
+			width: 80%;  /* Make the result box half the screen width */
+			height: 200px;  /* Fixed height */
+			overflow: auto; /* Scrollable content */
+			border: 1px solid #ccc;
+			padding: 10px;
+			margin-top: 10px;
+			white-space: pre-wrap;  /* Ensures that long lines break properly */
+			word-wrap: break-word;
+			margin: 20px auto;  /* Center the box horizontally */
+		}
+
+		/* Make the text area within the box more readable */
+		/* Remove any default styling from pre */
+		#resultText {
+			white-space: pre-wrap;  /* Keeps line breaks and spacing */
+			word-wrap: break-word;  /* Wrap long words */
+			background-color: transparent;  /* Make background transparent */
+			color: black;  /* Ensure text color is readable */
+			margin: 0;  /* Remove default margin */
+			padding: 0;  /* Remove any padding */
+			border: none;  /* Ensure there's no border */
+		}
+
+
+		#postsContainer div {
+			margin-bottom: 15px;
+			padding: 10px;
+			border: 1px solid #ddd;
+			border-radius: 5px;
+			background-color: #f9f9f9;
+			
+		.output-box {
+			width: 100%;               /* Make it take the full width of its container */
+			padding: 10px;             /* Add some space inside the box */
+			border: 1px solid #ccc;   /* Light gray border */
+			border-radius: 5px;       /* Rounded corners */
+			font-family: 'Courier New', monospace; /* Monospaced font for the output */
+			font-size: 14px;           /* Adjust text size */
+			background-color: #fff;    /* White background */
+			color: #333;               /* Dark text color */
+			overflow-x: auto;          /* Allow horizontal scrolling if content overflows */
+			margin-top: 10px;          /* Add some margin on top */
+			white-space: pre-wrap;     /* Wrap text if it overflows */
+		}
+			
+		}
+		        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+		</style>
+</head>
+<body>
+    <h1>Verification and Block Creation</h1>
+
+	Use the table below to verify transactions here. You may select via drop-down to include them in the next block. Note that verification only checks the signature, you must check yourself for sufficient funds and double-spending.
+	
+	<h2>Previous Transactions</h2>
+	<form id="postForm">
+    <div id="postsContainer">
+        <!-- Posts will be displayed here -->
+    </div>
+    </form>
+	
+	Once you have chosen all valid transactions, upload your RSA key here to sign off on the creation of the block. Your bonus will be included as a new transaction.
+	
+	    <!-- Form to input transaction details -->
+    <div>		
+		<!-- File input for uploading the private key file -->
+		<label for="fileInput">User ID and keys file:</label>
+        <input type="file" id="fileInput" accept=".txt">
+		<button type="button" onclick="addBlockToTable()">Create Block</button>
+	</div>
+
+
+    <script src="./assets/js/verification-script.js"></script>
+	<script>loadPostsToVerifyIncludeDropdown()</script>
+
+	    <h1>Preview Block</h1>
+    <form id="blockForm">
+        <label for="blockInput">Enter Block JSON:</label>
+        <textarea id="blockInput" rows="5" cols="50" placeholder="Enter block data as JSON"></textarea>
+        <br>
+    </form>
+
+    <table id="transactionsTable">
+        <thead>
+            <tr>
+                <th>Time Submitted</th>
+                <th>Signed Block Hash</th>
+                <th>Publisher Name</th>
+                <th>Transactions</th>
+                <th>Previous Block Hash</th>
+                <th>Verifier IDs</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+
+
+
+
+</body>
+</html>
+

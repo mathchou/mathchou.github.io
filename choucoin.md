@@ -2,7 +2,7 @@
 layout: default
 ---
 
-## Welcome to Choucoin
+## Welcome to Choucoin&copy;
 
 1. Tool to generate your public and private keys: [Key generator and user registration](./generateRSAkeypair.html)
   - Use the above tool to create a public and private key pair. It also makes a file that you should save (and keep to yourself!) for future reference
@@ -14,7 +14,7 @@ layout: default
   - Here is a tool that can verify transactions
   - It is linked to the user registration list posted [here](./generateRSAkeypair.html)
   - You may choose to verify transactions manually by hashing the transaction message (SHA-256) and checking the digital signature of the sender (e=65537)
-4. Block Publishing: [Block generating tool](./blocks.html)
+4. Block Publishing: [Block generating tool](./create-block.html)
   - Here are tools to assist in selecting verified transactions to include in a block. You can:
     - Allot yourself your publishing bonus
     - Select which transactions are valid

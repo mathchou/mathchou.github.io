@@ -15,7 +15,7 @@ async function millerRabin(n, k = 5) {
 
     // Perform k iterations of the test
     for (let i = 0; i < k; i++) {
-        const a = await generateRandomBigInt(128); // Random number for the test (128-bit)
+        const a = await generateRandomBigInt(256); // Random number for the test (256-bit)
         let x = modPow(a, d, n);
         if (x === 1n || x === n - 1n) continue;
 
@@ -45,7 +45,7 @@ function modPow(a, b, c) {
 }
 
 // Generate a secure random BigInt within a given bit length
-async function generateRandomBigInt(bits = 128) {
+async function generateRandomBigInt(bits = 256) {
     const byteLength = Math.ceil(bits / 8); // Convert bits to byte length
     const array = new Uint8Array(byteLength);
 
@@ -61,8 +61,8 @@ async function generateRandomBigInt(bits = 128) {
     return value;
 }
 
-// Generate a random 128-bit prime
-async function generateLargePrime(bits = 128) {
+// Generate a random 256-bit prime
+async function generateLargePrime(bits = 256) {
     let primeCandidate;
     const max = (1n << BigInt(bits)) - 1n;
     const min = 1n << BigInt(bits - 1);
@@ -104,10 +104,29 @@ function modInverse(a, m) {
     return x1;
 }
 
-// Generate two 128-bit primes, modulus N, and RSA keys (e and d)
+
+// Function to validate userId
+function isValidUserId(userId) {
+  const minLength = 3; // Minimum length
+  const maxLength = 20; // Maximum length
+  const regex = /^[a-zA-Z0-9_]+$/; // Only alphanumeric characters and underscores
+
+  // Check length and pattern
+  if (userId.length < minLength || userId.length > maxLength) {
+    return false;
+  }
+  if (!regex.test(userId)) {
+    return false;
+  }
+
+  return true;
+}
+
+
+// Generate two 256-bit primes, modulus N, and RSA keys (e and d)
 async function generatePrimesAndRSA() {
-    const p = await generateLargePrime(128); // Generate 128-bit prime
-    const q = await generateLargePrime(128); // Generate another 128-bit prime
+    const p = await generateLargePrime(256); // Generate 256-bit prime
+    const q = await generateLargePrime(256); // Generate another 256-bit prime
 
     // Compute modulus N
     const N = p * q;
@@ -120,6 +139,8 @@ async function generatePrimesAndRSA() {
 
     // Compute the modular inverse of e to get the private exponent d
     const d = modInverse(e, phiN);
+	
+	const userId = document.getElementById('user_id').value.trim();
 
     // Display the primes, modulus N, e, and d on the page
     document.getElementById('NValue').innerText = N.toString();
@@ -128,15 +149,24 @@ async function generatePrimesAndRSA() {
     document.getElementById('qValue').innerText = q.toString();
     document.getElementById('dValue').innerText = d.toString();
 
-    // Enable the download link
-    const downloadLink = document.getElementById('downloadLink');
-    downloadLink.style.display = 'block';
-    downloadLink.setAttribute('href', createDownloadFile(p, q, N, e, d));
+	
+	if (isValidUserId(userId)) {
+		// Create and show the download link
+		const downloadLink = document.getElementById('downloadLink');
+		const fileURL = createDownloadFile(userId, p, q, N, e, d);
+
+		downloadLink.style.display = 'block';
+		downloadLink.setAttribute('href', fileURL);
+		downloadLink.setAttribute('download', `${userId}_rsa_keys.txt`);
+	} else {
+		console.error("Please enter valid User ID:", userId);
+	}
 }
 
 // Create a downloadable text file with RSA key data
-function createDownloadFile(p, q, N, e, d) {
+function createDownloadFile(userId, p, q, N, e, d) {
     const keyData = `
+userId = ${userId}
 p = ${p}
 q = ${q}
 N = ${N}

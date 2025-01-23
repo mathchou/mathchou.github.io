@@ -60,7 +60,7 @@
 <body>
     <h1>Verification and Block Creation</h1>
 
-	Use the table below to verify and select transactions to be included in the next block.
+	Use the table below to verify transactions here.
 	
 	<h2>Previous Transactions</h2>
 	<form id="postForm">
@@ -69,17 +69,13 @@
     </div>
     </form>
 
+	<h2>Look-up previous transaction by hash</h2>
+	<br>
+	(Additional functionality to be added later)
 
-    <!-- Form to input transaction details -->
-    <div>		
-		<!-- File input for uploading the private key file -->
-		<label for="fileInput">User ID and keys file:</label>
-        <input type="file" id="fileInput" accept=".txt">
-	</div>
-	
     <!-- Link to external JavaScript file -->
     <script src="./assets/js/verification-script.js"></script>
-	<script></script>
+	<script>loadPostsToVerify()</script>
 	
 </body>
 </html>
