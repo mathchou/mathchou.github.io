@@ -1,7 +1,8 @@
 let N = null;
 let d = null;
 let userId = null;
-let signature= null;
+let signature = null;
+let datetime = null;
 
 const form = document.getElementById('postForm');
 
@@ -18,46 +19,44 @@ function modPow(a, b, c) {
     return result;
 }
 
-
 // File upload handler: Parse userId, N, and d from the uploaded file
 document.getElementById('fileInput').addEventListener('change', function(event) {
     const file = event.target.files[0];
     if (file && file.type === 'text/plain') {
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             const content = e.target.result;
-            const rows = content.split('\n').map(row => row.trim());  // Split by new line and trim extra spaces
-            let parsedVariables = {};
+            const rows = content.split('\n').map(row => row.trim()); // Split by new line and trim extra spaces
+            const parsedVariables = {};
 
-            // Parse the file content to extract N and d
+            // Parse the file content to extract variables
             rows.forEach(row => {
-                // Check if row contains an '=' sign
                 if (row.includes('=')) {
-                    const parts = row.split('=');
-                    const variableName = parts[0].trim();
-                    const variableValue = BigInt(parts[1].trim()); // Convert value to BigInt
-
-                    // Store N and d values
-                    parsedVariables[variableName] = variableValue;
+                    const [key, value] = row.split('=').map(part => part.trim());
+                    if (key && value) {
+                        // Use BigInt only for N and d
+                        parsedVariables[key] = (key === 'N' || key === 'd') ? BigInt(value) : value;
+                    }
                 }
             });
 
-            // Extract N and d from the parsed variables
-            N = parsedVariables['N'];
-            d = parsedVariables['d'];
-			userId = parsedVariables['userId'];
-
-            if (!N || !d) {
-                alert("Please upload a valid file with N, d, and userId.");
-                return;
+            // Validate and assign N, d, and userId
+            if (parsedVariables['N'] && parsedVariables['d'] && parsedVariables['userId']) {
+                N = parsedVariables['N'];
+                d = parsedVariables['d'];
+                userId = parsedVariables['userId'];
+                alert("User ID, N, and d successfully loaded.");
+            } else {
+                alert("The uploaded file is invalid. Please ensure it contains 'N', 'd', and 'userId' in the correct format.");
             }
-			
         };
+
         reader.readAsText(file);
     } else {
         alert('Please upload a valid .txt file.');
     }
 });
+
 
 // Function to generate and display the transaction string when the button is clicked
 async function generateTransaction() {
@@ -68,7 +67,8 @@ async function generateTransaction() {
     }
 
     // Get values from input fields
-    const sender = userID.toString();
+    const sender = userId.toString();
+	datetime = new Date().toISOString();
     const receiver = document.getElementById('receiver').value;
     const amount = document.getElementById('amount').value;
     const comment = document.getElementById('comment').value;
@@ -78,9 +78,6 @@ async function generateTransaction() {
         alert("All fields are required!");
         return;
     }
-
-    // Get the current date and time
-    const datetime = new Date().toISOString().slice(0, 19);
 
     // Concatenate values to create the input string for hashing
     const hashInput = `${sender} sends ${amount} Choucoin to ${receiver} for ${comment} on ${datetime}`;
@@ -92,13 +89,28 @@ async function generateTransaction() {
     const hashBigInt = BigInt('0x' + hash);
 
     // Sign the hash using RSA private key (modular exponentiation)
-    signature = modPow(hashBigInt, d, N);
+    signature = modPow(hashBigInt, BigInt(d), BigInt(N));
+	console.log(signature);
+	checkSig = modPow(signature, BigInt(65537), BigInt(N));
+	console.log(checkSig);
+	console.log(checkSig === hashBigInt);
 
     // Create the transaction sentence
     const transactionSentence = `${sender} sends ${amount} Choucoin to ${receiver} for ${comment} on ${datetime}, signed: ${signature}`;
 
     // Display the result
     document.getElementById('resultText').innerText = transactionSentence;
+	
+	// troubleshooting:
+	console.log(`N: ${N}`);
+	console.log(`d: ${d}`);
+	console.log(`hashBigInt: 0x${hashBigInt.toString(16)}`);
+	console.log(`Signature: ${signature}`);
+	console.log(`CheckSig: ${checkSig}`);
+	console.log(`Hash Hex: ${hash}`);
+	console.log(`CheckSig Hex: 0x${checkSig.toString(16)}`);
+	
+	
 }
 
 // Function to generate a SHA-256 hash of a string
@@ -138,11 +150,11 @@ const herokuBackendUrl = 'https://choucoin-posts-4f7c7496eb49.herokuapp.com/';  
 // Function to submit a new transaction
 async function submitTransaction() {
     // Get values from the input fields
-    const sender = document.getElementById('sender').value.trim();
+    const sender = userId.toString();
     const receiver = document.getElementById('receiver').value.trim();
     const amount = document.getElementById('amount').value.trim();
     const comment = document.getElementById('comment').value.trim();
-    const datetime = new Date().toISOString(); // Generate current datetime in ISO format
+    const time = datetime; // Get time of transaction
     const signedHash = signature.toString();
     const publicKey = N.toString();
 
@@ -158,7 +170,7 @@ async function submitTransaction() {
         receiver,
         amount: parseFloat(amount), // Convert amount to a number
         comment,
-        datetime,
+        time,
         signedHash,
         publicKey
     };

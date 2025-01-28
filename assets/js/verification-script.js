@@ -174,17 +174,11 @@ async function loadPostsToVerify() {
                         class="verify-btn" 
                         data-user-id="${post.sender}" 
                         data-post-sig="${post.signedHash}" 
-                        data-user-pubkey="${post.publicKey}">
+                        data-user-pubkey="${post.publicKey}"
+						data-message="${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime}">
                         Verify Post
                     </button>
-                    
-                    <!-- Block Inclusion Dropdown -->
-                    <select class="block-dropdown"  data-user-id="${post.sender}" data-post-sig="${post.signedHash}">
-						<option value="" disabled selected>Select One</option>
-                        <option value="include">Include in Block</option>
-                        <option value="exclude">Do Not Include in Block</option>
-                    </select>
-                    <pre id="verification-text" class="output-box">Waiting to be verified...</pre>
+					<pre id="verification-text" class="output-box">Waiting to be verified...</pre>
                 </div>
             `;
 
@@ -202,16 +196,20 @@ async function loadPostsToVerify() {
                 const userId = verifyButton.getAttribute('data-user-id');
                 const sigId = verifyButton.getAttribute('data-post-sig');
                 const userKey = verifyButton.getAttribute('data-user-pubkey');
+				const message = verifyButton.getAttribute('data-message');
 
                 // Decrypt the signature (verify the signature)
                 const decryptedSignature = modPow(BigInt(sigId), BigInt(65537), BigInt(userKey));
+				console.log(decryptedSignature);
 
                 // Redo hash of the transaction to compare with decrypted signature
-                const hashInput = `${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime}`;
+                const hashInput = message;
+				console.log(message)
                 const hash = await generateHash(hashInput);
 
                 // Convert hash from hex to BigInt
                 const hashBigInt = BigInt('0x' + hash);
+				console.log(hashBigInt);
 
                 // Compare the decrypted signature with the hash
                 if (decryptedSignature === hashBigInt) {
