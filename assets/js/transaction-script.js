@@ -57,6 +57,109 @@ document.getElementById('fileInput').addEventListener('change', function(event) 
     }
 });
 
+// SHA-256 implementation (using Web Crypto API in the browser)
+async function sha256(message) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = new Uint8Array(hashBuffer);
+    return hashArray;
+}
+
+
+
+// Convert a byte array to a BigInt (hex string)
+function byteArrayToBigInt(byteArray) {
+    return BigInt('0x' + Array.from(byteArray).map(byte => byte.toString(16).padStart(2, '0')).join(''));
+}
+
+// PKCS#1 v1.5 padding function
+function pkcs1v15Padding(hash) {
+    const blockType = 0x01;  // Type 1 for private key encryption padding
+    const emLength = 64;  // Length of the message block (assuming 512-bit RSA)
+    
+    // Padding starts with 0x00 0x01 and followed by random padding 0xFF, then the hash
+    const padding = new Array(emLength - 3 - hash.length).fill(0xFF);
+    const paddedMessage = [0x00, blockType, ...padding, 0x00, ...hash];
+    
+    return new Uint8Array(paddedMessage);
+}
+
+// Helper function to convert a hex string to a byte array
+function hexStringToByteArray(hexString) {
+    const byteArray = [];
+    for (let i = 0; i < hexString.length; i += 2) {
+        byteArray.push(parseInt(hexString.substr(i, 2), 16));
+    }
+    return byteArray;
+}
+
+// PKCS#1 v1.5 unpadding function
+function pkcs1v15Unpadding(paddedMessage) {
+    // Ensure the message starts with 0x00 0x01, followed by padding of 0xFF, and the actual message hash
+    if (paddedMessage[0] !== 0x00 || paddedMessage[1] !== 0x01) {
+        throw new Error("Invalid padding in the signature.");
+    }
+
+    // Find the padding boundary (i.e., the first 0x00 byte after 0x01 0xFF padding)
+    let paddingStartIndex = 2;  // Skip 0x00 0x01
+    while (paddedMessage[paddingStartIndex] === 0xFF) {
+        paddingStartIndex++;
+    }
+
+    // The actual message hash starts after the padding and the final 0x00 byte
+    if (paddedMessage[paddingStartIndex] !== 0x00) {
+        throw new Error("Invalid padding in the signature.");
+    }
+
+    // Extract the actual hash (the message hash after padding)
+    return paddedMessage.slice(paddingStartIndex + 1);
+}
+
+// Function to sign a message using the private key (d, n)
+async function signMessage(message, d, N) {
+
+    // Step 1: Hash the message with SHA-256
+    const messageHash = await sha256(message);
+	console.log("message hash:", messageHash);
+
+    // Step 2: Apply PKCS#1 v1.5 padding
+    const paddedMessage = pkcs1v15Padding(messageHash);
+	console.log("padded message:", paddedMessage);
+	
+    // Step 3: Convert padded message to BigInt
+    const paddedMessageBigInt = byteArrayToBigInt(paddedMessage);
+
+    // Step 4: Apply RSA signing: s = m^d mod n
+    const signature = modPow(paddedMessageBigInt, BigInt(d), BigInt(N));
+	console.log("generated signature:", signature);
+
+    return signature;
+}
+
+async function verifySignature(message, signature, e, N) {
+    // Step 1: Hash and pad the message with SHA-256 similar to how it was done in signMessage()
+    const messageHash = await sha256(message);
+    const paddedMessage = pkcs1v15Padding(messageHash);
+    const paddedMessageBigInt = byteArrayToBigInt(paddedMessage);
+	console.log("padded message Hash as big int:", paddedMessageBigInt);
+
+    // Step 2: Check if the signature is valid before converting to BigInt
+    if (!signature) {
+        console.error("Signature is null or undefined");
+        return false;
+    }
+
+    console.log("Signature:", signature);
+
+    // Step 3: Apply RSA verification: s^e mod n
+    const decryptedMessageHashBigInt = modPow(signature, BigInt(e), BigInt(N));
+	console.log("Public verification of signature:", decryptedMessageHashBigInt);
+
+	// Step 4: compare decryptedMessageHashBigInt to the paddedMessageBigInt
+	
+    return decryptedMessageHashBigInt === paddedMessageBigInt;
+}
 
 // Function to generate and display the transaction string when the button is clicked
 async function generateTransaction() {
@@ -68,7 +171,7 @@ async function generateTransaction() {
 
     // Get values from input fields
     const sender = userId.toString();
-	datetime = new Date().toISOString();
+	datetime = new Date().toISOString().slice(0, 19);
     const receiver = document.getElementById('receiver').value;
     const amount = document.getElementById('amount').value;
     const comment = document.getElementById('comment').value;
@@ -80,52 +183,25 @@ async function generateTransaction() {
     }
 
     // Concatenate values to create the input string for hashing
-    const hashInput = `${sender} sends ${amount} Choucoin to ${receiver} for ${comment} on ${datetime}`;
+    const messageInput = `${sender} sends ${amount} Choucoin to ${receiver} for ${comment} on ${datetime}`;
+	console.log(messageInput);
 
-    // Generate a hash of the concatenated values (using SHA-256)
-    const hash = await generateHash(hashInput);
 
-    // Convert the hash to a BigInt (needed for RSA signing)
-    const hashBigInt = BigInt('0x' + hash);
+    // Sign the message
+    signature = await signMessage(messageInput, d, N);
+    console.log("Generated Signature:", signature);
 
-    // Sign the hash using RSA private key (modular exponentiation)
-    signature = modPow(hashBigInt, BigInt(d), BigInt(N));
-	console.log(signature);
-	checkSig = modPow(signature, BigInt(65537), BigInt(N));
-	console.log(checkSig);
-	console.log(checkSig === hashBigInt);
+    // Verify the signature
+    checkSig = await verifySignature(messageInput, signature, 65537, N);
+    console.log("Verification result:", checkSig);  // This should now return true if everything is correct
+
 
     // Create the transaction sentence
     const transactionSentence = `${sender} sends ${amount} Choucoin to ${receiver} for ${comment} on ${datetime}, signed: ${signature}`;
 
     // Display the result
     document.getElementById('resultText').innerText = transactionSentence;
-	
-	// troubleshooting:
-	console.log(`N: ${N}`);
-	console.log(`d: ${d}`);
-	console.log(`hashBigInt: 0x${hashBigInt.toString(16)}`);
-	console.log(`Signature: ${signature}`);
-	console.log(`CheckSig: ${checkSig}`);
-	console.log(`Hash Hex: ${hash}`);
-	console.log(`CheckSig Hex: 0x${checkSig.toString(16)}`);
-	
-	
-}
-
-// Function to generate a SHA-256 hash of a string
-async function generateHash(input) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(input);
-
-    // Use the Web Cryptography API to generate a SHA-256 hash
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-
-    // Convert the ArrayBuffer to a hexadecimal string
-    const hashArray = Array.from(new Uint8Array(hashBuffer)); // Convert buffer to byte array
-    const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
-
-    return hashHex;
+		
 }
 
 // Function to copy the transaction text to clipboard
