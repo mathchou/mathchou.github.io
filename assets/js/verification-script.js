@@ -16,19 +16,63 @@ function modPow(a, b, c) {
 }
 
 
-// Function to generate a SHA-256 hash of a string
-async function generateHash(input) {
+// SHA-256 implementation (using Web Crypto API in the browser)
+async function sha256(message) {
     const encoder = new TextEncoder();
-    const data = encoder.encode(input);
-
-    // Use the Web Cryptography API to generate a SHA-256 hash
+    const data = encoder.encode(message);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = new Uint8Array(hashBuffer);
+    return hashArray;
+}
 
-    // Convert the ArrayBuffer to a hexadecimal string
-    const hashArray = Array.from(new Uint8Array(hashBuffer)); // Convert buffer to byte array
-    const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
 
-    return hashHex;
+
+// Convert a byte array to a BigInt (hex string)
+function byteArrayToBigInt(byteArray) {
+    return BigInt('0x' + Array.from(byteArray).map(byte => byte.toString(16).padStart(2, '0')).join(''));
+}
+
+// PKCS#1 v1.5 padding function
+function pkcs1v15Padding(hash) {
+    const blockType = 0x01;  // Type 1 for private key encryption padding
+    const emLength = 64;  // Length of the message block (assuming 512-bit RSA)
+    
+    // Padding starts with 0x00 0x01 and followed by random padding 0xFF, then the hash
+    const padding = new Array(emLength - 3 - hash.length).fill(0xFF);
+    const paddedMessage = [0x00, blockType, ...padding, 0x00, ...hash];
+    
+    return new Uint8Array(paddedMessage);
+}
+
+// Helper function to convert a hex string to a byte array
+function hexStringToByteArray(hexString) {
+    const byteArray = [];
+    for (let i = 0; i < hexString.length; i += 2) {
+        byteArray.push(parseInt(hexString.substr(i, 2), 16));
+    }
+    return byteArray;
+}
+
+// PKCS#1 v1.5 unpadding function
+function pkcs1v15Unpadding(paddedMessage) {
+    // Ensure the message starts with 0x00 0x01, followed by padding of 0xFF, and the actual message hash
+    if (paddedMessage[0] !== 0x00 || paddedMessage[1] !== 0x01) {
+        throw new Error("Invalid padding in the signature.");
+    }
+
+    // Find the padding boundary (i.e., the first 0x00 byte after 0x01 0xFF padding)
+    let paddingStartIndex = 2;  // Skip 0x00 0x01
+    while (paddedMessage[paddingStartIndex] === 0xFF) {
+        paddingStartIndex++;
+    }
+
+    // The actual message hash starts after the padding and the final 0x00 byte
+    if (paddedMessage[paddingStartIndex] !== 0x00) {
+        throw new Error("Invalid padding in the signature.");
+    }
+
+    // Extract the actual hash (the message hash after padding)
+    return paddedMessage.slice(paddingStartIndex + 1);
 }
 
 
@@ -64,27 +108,34 @@ async function loadPostsToVerifyIncludeDropdown() {
             console.log('signature:', post.signedHash);
 
             // Create the HTML structure for each post
-            postDiv.innerHTML = `
-                <p>${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime}, signed: ${post.signedHash}</p>
-                <div class="actions">
-                    <!-- Verify Button -->
-                    <button 
-                        class="verify-btn" 
-                        data-user-id="${post.sender}" 
-                        data-post-sig="${post.signedHash}" 
-                        data-user-pubkey="${post.publicKey}">
-                        Verify Post
-                    </button>
-                    
-                    <!-- Block Inclusion Dropdown -->
-                    <select class="block-dropdown"  data-user-id="${post.sender}" data-post-sig="${post.signedHash}">
-						<option value="" disabled selected>Select One</option>
-                        <option value="include">Include in Block</option>
-                        <option value="exclude">Do Not Include in Block</option>
-                    </select>
-                    <pre id="verification-text" class="output-box">Waiting to be verified...</pre>
-                </div>
-            `;
+			postDiv.innerHTML = `
+				<table style="width: 100%;">
+					<tr>
+						<!-- Column for the verify button -->
+						<td style="border: 1px solid #ddd; padding: 5px; width: 90%; text-align: center; display: flex; align-items: center; gap: 5px;">
+							<button 
+								class="verify-btn" 
+								data-user-id="${post.sender}" 
+								data-post-sig="${post.signedHash}" 
+								data-user-pubkey="${post.publicKey}"
+								data-message="${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime}">
+								Verify Post
+							</button>
+							<!-- Block Inclusion Dropdown -->
+							<select class="block-dropdown"  data-user-id="${post.sender}" data-post-sig="${post.signedHash}">
+								<option value="" disabled selected>Select One</option>
+								<option value="include">Include in Block</option>
+								<option value="exclude">Do Not Include in Block</option>
+							</select>
+							<pre id="verification-text" class="output-box">Waiting to be verified...</pre>
+						</td>
+						<!-- Column for the message with scrolling enabled -->
+						<td style="border: 1px solid #ddd; padding: 5px; max-width: 300px; white-space: nowrap; overflow-x: auto;">
+							${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime}, signed: ${post.signedHash}
+						</td>
+					</tr>
+				</table>
+			`;
 
             // Append the post to the container
             postsContainer.appendChild(postDiv);
@@ -100,19 +151,13 @@ async function loadPostsToVerifyIncludeDropdown() {
                 const userId = verifyButton.getAttribute('data-user-id');
                 const sigId = verifyButton.getAttribute('data-post-sig');
                 const userKey = verifyButton.getAttribute('data-user-pubkey');
+				const message = verifyButton.getAttribute('data-message');
 
-                // Decrypt the signature (verify the signature)
-                const decryptedSignature = modPow(BigInt(sigId), BigInt(65537), BigInt(userKey));
-
-                // Redo hash of the transaction to compare with decrypted signature
-                const hashInput = `${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime}`;
-                const hash = await generateHash(hashInput);
-
-                // Convert hash from hex to BigInt
-                const hashBigInt = BigInt('0x' + hash);
+				// Verify signature
+				const valid = verifySignature(message, BigInt(sigId), BigInt(65537), BigInt(userKey)); 
 
                 // Compare the decrypted signature with the hash
-                if (decryptedSignature === hashBigInt) {
+                if (valid) {
                     // Update the <pre> element with success message
                     verificationText.textContent = `Post verified successfully.`;
                 } else {
@@ -122,8 +167,8 @@ async function loadPostsToVerifyIncludeDropdown() {
             });
 
             console.log('Verify Button:', verifyButton);
-            
-            // Add event listener for the block inclusion dropdown
+			
+			// Add event listener for the block inclusion dropdown
             const blockDropdown = postDiv.querySelector('.block-dropdown');
             blockDropdown.addEventListener('change', () => {
                 const action = blockDropdown.value;
@@ -149,6 +194,32 @@ async function loadPostsToVerifyIncludeDropdown() {
     }
 }
 
+
+async function verifySignature(message, signature, e, N) {
+    // Step 1: Hash and pad the message with SHA-256 similar to how it was done in signMessage()
+    const messageHash = await sha256(message);
+    const paddedMessage = pkcs1v15Padding(messageHash);
+    const paddedMessageBigInt = byteArrayToBigInt(paddedMessage);
+	console.log("padded message Hash as big int:", paddedMessageBigInt);
+
+    // Step 2: Check if the signature is valid before converting to BigInt
+    if (!signature) {
+        console.error("Signature is null or undefined");
+        return false;
+    }
+
+    console.log("Signature:", signature);
+
+    // Step 3: Apply RSA verification: s^e mod n
+    const decryptedMessageHashBigInt = modPow(signature, BigInt(e), BigInt(N));
+	console.log("Public verification of signature:", decryptedMessageHashBigInt);
+
+	// Step 4: compare decryptedMessageHashBigInt to the paddedMessageBigInt
+	
+    return decryptedMessageHashBigInt === paddedMessageBigInt;
+}
+
+
 async function loadPostsToVerify() {
     try {
         const response = await fetch(`${herokuBackendUrl}get-transactions`);
@@ -166,21 +237,28 @@ async function loadPostsToVerify() {
             console.log('signature:', post.signedHash);
 
             // Create the HTML structure for each post
-            postDiv.innerHTML = `
-                <p>${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime}, signed: ${post.signedHash}</p>
-                <div class="actions">
-                    <!-- Verify Button -->
-                    <button 
-                        class="verify-btn" 
-                        data-user-id="${post.sender}" 
-                        data-post-sig="${post.signedHash}" 
-                        data-user-pubkey="${post.publicKey}"
-						data-message="${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime}">
-                        Verify Post
-                    </button>
-					<pre id="verification-text" class="output-box">Waiting to be verified...</pre>
-                </div>
-            `;
+			postDiv.innerHTML = `
+				<table style="width: 100%;">
+					<tr>
+						<!-- Column for the verify button -->
+						<td style="border: 1px solid #ddd; padding: 5px; width: 90%; text-align: center; display: flex; align-items: center; gap: 5px;">
+							<button 
+								class="verify-btn" 
+								data-user-id="${post.sender}" 
+								data-post-sig="${post.signedHash}" 
+								data-user-pubkey="${post.publicKey}"
+								data-message="${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime}">
+								Verify Post
+							</button>
+							<pre id="verification-text" class="output-box">Waiting to be verified...</pre>
+						</td>
+						<!-- Column for the message with scrolling enabled -->
+						<td style="border: 1px solid #ddd; padding: 5px; max-width: 300px; white-space: nowrap; overflow-x: auto;">
+							${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime}, signed: ${post.signedHash}
+						</td>
+					</tr>
+				</table>
+			`;
 
             // Append the post to the container
             postsContainer.appendChild(postDiv);
@@ -198,21 +276,11 @@ async function loadPostsToVerify() {
                 const userKey = verifyButton.getAttribute('data-user-pubkey');
 				const message = verifyButton.getAttribute('data-message');
 
-                // Decrypt the signature (verify the signature)
-                const decryptedSignature = modPow(BigInt(sigId), BigInt(65537), BigInt(userKey));
-				console.log(decryptedSignature);
-
-                // Redo hash of the transaction to compare with decrypted signature
-                const hashInput = message;
-				console.log(message)
-                const hash = await generateHash(hashInput);
-
-                // Convert hash from hex to BigInt
-                const hashBigInt = BigInt('0x' + hash);
-				console.log(hashBigInt);
+				// Verify signature
+				const valid = verifySignature(message, BigInt(sigId), BigInt(65537), BigInt(userKey)); 
 
                 // Compare the decrypted signature with the hash
-                if (decryptedSignature === hashBigInt) {
+                if (valid) {
                     // Update the <pre> element with success message
                     verificationText.textContent = `Post verified successfully.`;
                 } else {

@@ -1,44 +1,43 @@
-const N = null;
-const d = null;
-const userId = null;
-const selectedPosts = [];
+let N = null;
+let d = null;
+let userId = null;
+let signature = null;
+let selectedPosts = [];
 
 const herokuBackendUrl = 'https://choucoin-posts-4f7c7496eb49.herokuapp.com/';  // Replace with your actual Heroku app URL
 
-// File upload handler: Parse N and d from the uploaded file
+// File upload handler: Parse userId, N, and d from the uploaded file
 document.getElementById('fileInput').addEventListener('change', function(event) {
     const file = event.target.files[0];
     if (file && file.type === 'text/plain') {
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             const content = e.target.result;
-            const rows = content.split('\n').map(row => row.trim());  // Split by new line and trim extra spaces
-            let parsedVariables = {};
+            const rows = content.split('\n').map(row => row.trim()); // Split by new line and trim extra spaces
+            const parsedVariables = {};
 
-            // Parse the file content to extract N and d
+            // Parse the file content to extract variables
             rows.forEach(row => {
-                // Check if row contains an '=' sign
                 if (row.includes('=')) {
-                    const parts = row.split('=');
-                    const variableName = parts[0].trim();
-                    const variableValue = BigInt(parts[1].trim()); // Convert value to BigInt
-
-                    // Store N and d values
-                    parsedVariables[variableName] = variableValue;
+                    const [key, value] = row.split('=').map(part => part.trim());
+                    if (key && value) {
+                        // Use BigInt only for N and d
+                        parsedVariables[key] = (key === 'N' || key === 'd') ? BigInt(value) : value;
+                    }
                 }
             });
 
-            // Extract N and d from the parsed variables
-            N = parsedVariables['N'];
-            d = parsedVariables['d'];
-			userId = parsedVariables['userId'];
-
-            if (!N || !d || !userId) {
-                alert("Please upload a valid file with N, d, and userId.");
-                return;
+            // Validate and assign N, d, and userId
+            if (parsedVariables['N'] && parsedVariables['d'] && parsedVariables['userId']) {
+                N = parsedVariables['N'];
+                d = parsedVariables['d'];
+                userId = parsedVariables['userId'];
+                alert("User ID, N, and d successfully loaded.");
+            } else {
+                alert("The uploaded file is invalid. Please ensure it contains 'N', 'd', and 'userId' in the correct format.");
             }
-			
         };
+
         reader.readAsText(file);
     } else {
         alert('Please upload a valid .txt file.');
@@ -58,46 +57,75 @@ function modPow(a, b, c) {
     return result;
 }
 
-// Function to generate a SHA-256 hash of a string
-async function generateHash(input) {
+// SHA-256 implementation (using Web Crypto API in the browser)
+async function sha256(message) {
     const encoder = new TextEncoder();
-    const data = encoder.encode(input);
-
-    // Use the Web Cryptography API to generate a SHA-256 hash
+    const data = encoder.encode(message);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-
-    // Convert the ArrayBuffer to a hexadecimal string
-    const hashArray = Array.from(new Uint8Array(hashBuffer)); // Convert buffer to byte array
-    const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
-
-    return hashHex;
+    const hashArray = new Uint8Array(hashBuffer);
+    return hashArray;
 }
 
+// Convert a byte array to a BigInt (hex string)
+function byteArrayToBigInt(byteArray) {
+    return BigInt('0x' + Array.from(byteArray).map(byte => byte.toString(16).padStart(2, '0')).join(''));
+}
 
-// get public key based on userID
-async function fetchUserPublicKey(userId) {
-    try {
-        const response = await fetch(`${herokuBackendUrl}fetch-block/${userId}`);
-		console.log("Fetching public key from URL:", url);  // Debug the URL
-        
-        if (!response.ok) {
-            throw new Error(`Failed to fetch public key: ${response.status}`);
-        }
+// PKCS#1 v1.5 padding function
+function pkcs1v15Padding(hash) {
+    const blockType = 0x01;  // Type 1 for private key encryption padding
+    const emLength = 64;  // Length of the message block (assuming 512-bit RSA)
+    
+    // Padding starts with 0x00 0x01 and followed by random padding 0xFF, then the hash
+    const padding = new Array(emLength - 3 - hash.length).fill(0xFF);
+    const paddedMessage = [0x00, blockType, ...padding, 0x00, ...hash];
+    
+    return new Uint8Array(paddedMessage);
+}
 
-        const data = await response.json();
-        
-        // Assuming the response contains the public key in 'N' field (as a string or BigInt)
-        const publicKey = data.N;
+// Function to sign a message using the private key (d, n)
+async function signMessage(message, d, N) {
 
-        if (publicKey) {
-            console.log('User Public Key:', publicKey);
-            return BigInt(publicKey); // Ensure it's returned as BigInt for modulus operation
-        } else {
-            console.error('No public key found for the user');
-        }
-    } catch (error) {
-        console.error('Error fetching user public key:', error);
+    // Step 1: Hash the message with SHA-256
+    const messageHash = await sha256(message);
+	console.log("message hash:", messageHash);
+
+    // Step 2: Apply PKCS#1 v1.5 padding
+    const paddedMessage = pkcs1v15Padding(messageHash);
+	console.log("padded message:", paddedMessage);
+	
+    // Step 3: Convert padded message to BigInt
+    const paddedMessageBigInt = byteArrayToBigInt(paddedMessage);
+
+    // Step 4: Apply RSA signing: s = m^d mod n
+    const signature = modPow(paddedMessageBigInt, BigInt(d), BigInt(N));
+	console.log("generated signature:", signature);
+
+    return signature;
+}
+
+async function verifySignature(message, signature, e, N) {
+    // Step 1: Hash and pad the message with SHA-256 similar to how it was done in signMessage()
+    const messageHash = await sha256(message);
+    const paddedMessage = pkcs1v15Padding(messageHash);
+    const paddedMessageBigInt = byteArrayToBigInt(paddedMessage);
+	console.log("padded message Hash as big int:", paddedMessageBigInt);
+
+    // Step 2: Check if the signature is valid before converting to BigInt
+    if (!signature) {
+        console.error("Signature is null or undefined");
+        return false;
     }
+
+    console.log("Signature:", signature);
+
+    // Step 3: Apply RSA verification: s^e mod n
+    const decryptedMessageHashBigInt = modPow(signature, BigInt(e), BigInt(N));
+	console.log("Public verification of signature:", decryptedMessageHashBigInt);
+
+	// Step 4: compare decryptedMessageHashBigInt to the paddedMessageBigInt
+	
+    return decryptedMessageHashBigInt === paddedMessageBigInt;
 }
 
 // generate bonus transaction of given value and type of bonus
@@ -109,10 +137,13 @@ function bonusTransaction(userId = userId, d = d, value, type) {
 		const receiver = userId;
 		const amount = value;
 		const comment = `bonus {$type}`;
-		const datetime = new DatE().toISOString();
-		
-		const hashInput = `${sender} sends ${amount} Choucoin to ${receiver} for ${comment} on ${datetime}`;
-		const signedHash = await generateHash(hashInput);
+		const datetime = new Date().toISOString().slice(0,19);
+		// Concatenate values to create the input string for hashing
+		const messageInput = `${sender} sends ${amount} Choucoin to ${receiver} for ${comment} on ${datetime}`;
+		console.log(messageInput);
+		// Sign the message
+		signature = await signMessage(messageInput, d, N);
+		console.log("Generated Signature:", signature);
 		const publicKey = N.toString();
 		
     const transactionPayload = {
@@ -147,7 +178,6 @@ function createBlock(verifieredBy = []) {
 		
 	// add bonus transaction value 2
 	selectedPosts.push(bonusTransaction(userId, d, 2, 'block publishing'));
-	
 	block.publisherName = userID;
 	block.publisherKey = N;
 	block.transactions = selectedPosts;
@@ -232,4 +262,84 @@ function addBlockToTable() {
 	} catch (error) {
 		alert('Invalid JSON input. Please try again.');
 	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// get public key based on userID
+async function fetchUserPublicKey(userId) {
+    try {
+        const response = await fetch(`${herokuBackendUrl}fetch-block/${userId}`);
+		console.log("Fetching public key from URL:", url);  // Debug the URL
+        
+        if (!response.ok) {
+            throw new Error(`Failed to fetch public key: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // Assuming the response contains the public key in 'N' field (as a string or BigInt)
+        const publicKey = data.N;
+
+        if (publicKey) {
+            console.log('User Public Key:', publicKey);
+            return BigInt(publicKey); // Ensure it's returned as BigInt for modulus operation
+        } else {
+            console.error('No public key found for the user');
+        }
+    } catch (error) {
+        console.error('Error fetching user public key:', error);
+    }
 }
