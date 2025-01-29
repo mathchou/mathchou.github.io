@@ -67,5 +67,5 @@ A list of all transactions and tools to verify them can be found here: [History 
 
 [Choucoin&copy; Tools](./choucoin.html).
 
-[Choucoin transactions](./posts.html).
+[Choucoin transactions](./all-transactions.html).
 
