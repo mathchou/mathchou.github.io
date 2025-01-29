@@ -47,7 +47,7 @@ document.getElementById('fileInput').addEventListener('change', function(event) 
 
 
 // Modular exponentiation (a^b % c) using BigInt
-function modPow(a, b, c) {
+async function modPow(a, b, c) {
     let result = 1n;
     a = a % c;
     while (b > 0n) {
@@ -105,7 +105,7 @@ async function signMessage(message, d, N) {
     const paddedMessageBigInt = byteArrayToBigInt(paddedMessage);
 
     // Step 4: Apply RSA signing: s = m^d mod n
-    const signature = modPow(paddedMessageBigInt, BigInt(d), BigInt(N));
+    const signature = await modPow(paddedMessageBigInt, BigInt(d), BigInt(N));
 	console.log("generated signature:", signature);
 
     return signature;
@@ -155,7 +155,7 @@ async function loadPostsToVerifyIncludeDropdown() {
 								data-user-id="${post.sender}" 
 								data-post-sig="${post.signedHash}" 
 								data-user-pubkey="${post.publicKey}"
-								data-message="${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime}">
+								data-message="${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime.slice(0,19)}">
 								Verify Post
 							</button>
 							<!-- Block Inclusion Dropdown -->
@@ -191,7 +191,7 @@ async function loadPostsToVerifyIncludeDropdown() {
 				const message = verifyButton.getAttribute('data-message');
 
 				// Verify signature
-				const valid = verifySignature(message, BigInt(sigId), BigInt(65537), BigInt(userKey)); 
+				const valid = await verifySignature(message, BigInt(sigId), BigInt(65537), BigInt(userKey)); 
 
                 // Compare the decrypted signature with the hash
                 if (valid) {
@@ -284,7 +284,7 @@ async function loadPostsToVerify() {
 								data-user-id="${post.sender}" 
 								data-post-sig="${post.signedHash}" 
 								data-user-pubkey="${post.publicKey}"
-								data-message="${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime}">
+								data-message="${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime.slice(0,19)}">
 								Verify Post
 							</button>
 							<pre id="verification-text" class="output-box">Waiting to be verified...</pre>
@@ -325,6 +325,8 @@ async function loadPostsToVerify() {
                     verificationText.textContent = `Failed to verify the post.`;
                 }
             });
+
+            console.log('Verify Button:', verifyButton);
 
             console.log('Verify Button:', verifyButton);
             
@@ -453,56 +455,89 @@ async function submitBlock(block) {
 		
 		
 
-function addBlockToTable() {
-	const input = document.getElementById('blockInput').value;
-	try {
-		const block = JSON.parse(input);
+document.addEventListener('DOMContentLoaded', () => {
+    fetch(`${herokuBackendUrl}api/recent-blocks`)
+        .then(response => response.json())
+        .then(blocks => {
+            const tableBody = document.querySelector('#blocksTable tbody');
 
-		const row = document.createElement('tr');
+            blocks.forEach(block => {
+                const row = document.createElement('tr');
 
-		// Time Submitted
-		const timeCell = document.createElement('td');
-		timeCell.textContent = block.timeOfCreation;
-		row.appendChild(timeCell);
+                // Time Submitted (Formatted)
+                const timeSubmitted = new Date(block.timeOfCreation).toLocaleString();
+                const timeCell = document.createElement('td');
+                timeCell.textContent = timeSubmitted;
+                row.appendChild(timeCell);
 
-		// Signed Block Hash
-		const hashCell = document.createElement('td');
-		hashCell.textContent = block.signedBlockHash;
-		row.appendChild(hashCell);
+                // Signed Block Hash (First 10 characters + "..." and click to copy full hash)
+                const blockHashCell = document.createElement('td');
+                const fullHash = block.signedBlockHash || ''; // Full signed block hash
+                const shortHash = fullHash.slice(0, 10); // First 10 characters
+                const truncatedHash = `${shortHash}...`; // Add "..." at the end
 
-		// Publisher Name
-		const publisherCell = document.createElement('td');
-		publisherCell.textContent = block.publisherName;
-		row.appendChild(publisherCell);
+                const blockHashText = document.createElement('span');
+                blockHashText.textContent = truncatedHash;
+                blockHashText.style.cursor = 'pointer';  // Make it look clickable
+                blockHashText.addEventListener('click', () => {
+                    // Copy full hash to clipboard when clicked
+                    navigator.clipboard.writeText(fullHash).then(() => {
+                        alert('Signed block hash copied to clipboard!');
+                    }).catch(err => {
+                        console.error('Error copying to clipboard:', err);
+                    });
+                });
 
-		// Transactions (hover-over link)
-		const transactionsCell = document.createElement('td');
-		const tooltip = document.createElement('div');
-		tooltip.className = 'tooltip';
-		tooltip.textContent = 'View Transactions';
-		const tooltipText = document.createElement('div');
-		tooltipText.className = 'tooltiptext';
-		tooltipText.textContent = block.transactions.join(', ');
-		tooltip.appendChild(tooltipText);
-		transactionsCell.appendChild(tooltip);
-		row.appendChild(transactionsCell);
+                blockHashCell.appendChild(blockHashText);
+                row.appendChild(blockHashCell);
 
-		// Previous Block Hash
-		const previousHashCell = document.createElement('td');
-		previousHashCell.textContent = block.previousBlockHash;
-		row.appendChild(previousHashCell);
+                // Publisher Name
+                const publisherCell = document.createElement('td');
+                publisherCell.textContent = block.publisherName || 'N/A';
+                row.appendChild(publisherCell);
 
-		// Verifier IDs
-		const verifiersCell = document.createElement('td');
-		verifiersCell.textContent = block.blockVerifiers.map(v => v.verifierId).join(', ');
-		row.appendChild(verifiersCell);
+                // Transactions (display only sender, amount, receiver)
+                const transactionsCell = document.createElement('td');
+                const transactions = block.transactions || [];
+                transactionsCell.innerHTML = transactions.map(transaction => {
+                    return `${transaction.sender} → ${transaction.receiver}: ${transaction.amount} CC`;
+                }).join('<br>');
+                row.appendChild(transactionsCell);
 
-		document.querySelector('#transactionsTable tbody').appendChild(row);
-	} catch (error) {
-		alert('Invalid JSON input. Please try again.');
-	}
-}
+                // Previous Block Hash (First 10 characters + "..." and click to copy full hash)
+                const prevBlockHashCell = document.createElement('td');
+                const prevFullHash = block.previousBlockHash || ''; // Full previous block hash
+                const prevShortHash = prevFullHash.slice(0, 10); // First 10 characters
+                const prevTruncatedHash = `${prevShortHash}...`; // Add "..." at the end
 
+                const prevBlockHashText = document.createElement('span');
+                prevBlockHashText.textContent = prevTruncatedHash;
+                prevBlockHashText.style.cursor = 'pointer';  // Make it look clickable
+                prevBlockHashText.addEventListener('click', () => {
+                    // Copy full previous block hash to clipboard when clicked
+                    navigator.clipboard.writeText(prevFullHash).then(() => {
+                        alert('Previous block hash copied to clipboard!');
+                    }).catch(err => {
+                        console.error('Error copying to clipboard:', err);
+                    });
+                });
+
+                prevBlockHashCell.appendChild(prevBlockHashText);
+                row.appendChild(prevBlockHashCell);
+
+                // Verifier's ID
+                const verifierCell = document.createElement('td');
+                verifierCell.textContent = block.verifierId || 'N/A';
+                row.appendChild(verifierCell);
+
+                // Append row to table
+                tableBody.appendChild(row);
+            });
+        })
+        .catch(err => {
+            console.error('Error fetching blocks:', err);
+        });
+});
 
 
 

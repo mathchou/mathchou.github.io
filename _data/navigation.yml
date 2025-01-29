@@ -9,7 +9,7 @@ main:
       - title: "Transact"
         url: "/send-choucoin"
       - title: "Block creation"
-        url: "/verify-trans"
+        url: "/create-block"
       - title: "All transactions"
         url: "/all-transactions"
       
