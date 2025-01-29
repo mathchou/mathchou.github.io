@@ -50,15 +50,13 @@ Alice bought an item from Bob for 3 Choucoin. The person who is _giving_ the Cho
 
 > Alice sends 3 Choucoin to Bob for cookies on 2025-01-14T18:15:00, signed: 26010574517299467705133524531951449443160637616806667514746447492490615128182
 
-This text output is the actual message we want to post to the transaction forum.
-
 ## Verifying transactions, securing the ledger
 
 Choucoin is a [proof of stake](https://en.wikipedia.org/wiki/Proof_of_stake) cryptocurrency. Users may choose to "stake" currency in order to be added to a list of validators. This currency is locked up from trading. Every week a subset of validators is chosen to verify transactions and add them to the ledger. If there is consensus between the chosen validators on which transactions are valid, then each is rewarded newly minted Choucoin&copy;. If a validator includes invalid transactions into the ledger, they lose their "staked" currency.
 
 Current list of validators: [Currently Staked Validators](./validators.html)
 
-There are validation tools available here: [Verification of Transactions](./verify-trans.html)
+A list of all transactions and tools to verify them can be found here: [History of Transactions](./all-transactions.html)
 
 
 
