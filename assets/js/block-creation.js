@@ -2,7 +2,6 @@ let N = null;
 let d = null;
 let userId = null;
 let signature = null;
-let selectedPosts = [];
 
 const herokuBackendUrl = 'https://choucoin-posts-4f7c7496eb49.herokuapp.com/';  // Replace with your actual Heroku app URL
 
@@ -142,9 +141,10 @@ function bonusTransaction(userId = userId, d = d, value, type) {
 		const messageInput = `${sender} sends ${amount} Choucoin to ${receiver} for ${comment} on ${datetime}`;
 		console.log(messageInput);
 		// Sign the message
-		signature = await signMessage(messageInput, d, N);
+		signature = signMessage(messageInput, d, N);
 		console.log("Generated Signature:", signature);
 		const publicKey = N.toString();
+		}
 		
     const transactionPayload = {
         sender,
@@ -178,13 +178,14 @@ function createBlock(verifieredBy = []) {
 		
 	// add bonus transaction value 2
 	selectedPosts.push(bonusTransaction(userId, d, 2, 'block publishing'));
-	block.publisherName = userID;
+	block.publisherName = userId;
 	block.publisherKey = N;
 	block.transactions = selectedPosts;
 	block.previousBlockHash = selectedHash; // need to write html and js to read this from a textbox
 	block.blockVerifiers = verifiedBy; // able to include or update who has verified block
 	const hashInput = JSON.stringify(block); // hash will contain everything prior to the new signature.
 	block.signedBlockHash = generateHash(hashInput);
+	return block
 }
 
 async function submitBlock(block) {
@@ -215,7 +216,7 @@ async function submitBlock(block) {
 		
 
 function addBlockToTable() {
-	const input = document.getElementById('blockInput').value;
+	const input = createBlock();
 	try {
 		const block = JSON.parse(input);
 
