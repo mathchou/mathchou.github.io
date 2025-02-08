@@ -217,6 +217,7 @@ async function submitTransaction() {
         if (response.ok) {
             const responseData = await response.json();
             alert(`Transaction submitted successfully! Transaction ID: ${responseData.transaction._id}`);
+			fetchAndDisplayTransactions();
         } else {
             const errorData = await response.json();
             alert(`Error submitting transaction: ${errorData.error}`);
@@ -271,6 +272,8 @@ async function fetchAndDisplayTransactions() {
         document.getElementById('transactionsContainer').innerHTML = `<p>Error: ${error.message}</p>`;
     }
 }
+
+
 
 // Call the function on page load
 fetchAndDisplayTransactions();

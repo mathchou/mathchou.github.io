@@ -1,0 +1,111 @@
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction List</title>
+<style>
+/* Style for the result container */
+#resultContainer {
+	position: relative; /* Positioning context for the button */
+	width: 80%;  /* Make the result box half the screen width */
+	height: 200px;  /* Fixed height */
+	overflow: auto; /* Scrollable content */
+	border: 1px solid #ccc;
+	padding: 10px;
+	margin-top: 10px;
+	white-space: pre-wrap;  /* Ensures that long lines break properly */
+	word-wrap: break-word;
+	margin: 20px auto;  /* Center the box horizontally */
+}
+
+/* Make the text area within the box more readable */
+/* Remove any default styling from pre */
+#resultText {
+    white-space: pre-wrap;  /* Keeps line breaks and spacing */
+    word-wrap: break-word;  /* Wrap long words */
+    background-color: transparent;  /* Make background transparent */
+    color: black;  /* Ensure text color is readable */
+    margin: 0;  /* Remove default margin */
+    padding: 0;  /* Remove any padding */
+    border: none;  /* Ensure there's no border */
+}
+
+
+#postsContainer div {
+	margin-bottom: 5px;
+	padding: 5px;
+	border: 1px solid #ddd;
+	border-radius: 2px;
+	background-color: #f9f9f9;
+	white-space: nowrap;       /* Prevent line breaks for long content */
+
+	
+.output-box {
+    width: 80%;               /* Make it take the full width of its container */
+    padding: 6px;             /* Add some space inside the box */
+    border: 1px solid #ccc;   /* Light gray border */
+    border-radius: 5px;       /* Rounded corners */
+    font-family: 'Courier New', monospace; /* Monospaced font for the output */
+    font-size: 13px;           /* Adjust text size */
+    background-color: #fff;    /* White background */
+    color: #333;               /* Dark text color */
+    overflow-x: auto;          /* Allow horizontal scrolling if content overflows */
+    margin-top: 5px;          /* Add some margin on top */
+    white-space: pre-wrap;     /* Wrap text if it overflows */
+}
+	
+}
+
+</style>
+</head>
+<body>
+<h2>Registered Validators</h2>
+<table border="1">
+	<thead>
+		<tr>
+			<th>Index</th>
+			<th>Username</th>
+		</tr>
+	</thead>
+	<tbody id="usersTableBody">
+		<!-- Users will be inserted here -->
+	</tbody>
+</table>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+    const tableBody = document.getElementById("usersTableBody");
+
+    try {
+        const response = await fetch('https://choucoin-posts-4f7c7496eb49.herokuapp.com/get-validators');
+        const users = await response.json();
+
+        users.forEach(user => {
+            const row = document.createElement("tr");
+
+            const indexCell = document.createElement("td");
+            indexCell.textContent = user.index;
+
+            const usernameCell = document.createElement("td");
+            usernameCell.textContent = user.user_id;
+
+            row.appendChild(indexCell);
+            row.appendChild(usernameCell);
+            tableBody.appendChild(row);
+        });
+    } catch (error) {
+        console.error("Error fetching users:", error);
+    }
+});
+</script>
+
+
+
+
+
+
+
+</body>
+
+</html>

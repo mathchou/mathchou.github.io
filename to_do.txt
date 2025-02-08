@@ -1,0 +1,14 @@
+TO DO:
+
+Set up block verification
+  - view most recent blocks
+  - view wallet amounts
+  - button to verify all transactions
+  - upload private key
+  - re-post block with verification.
+
+Set up way to remove transactions
+
+Display list of current wallet amounts
+
+Display only most recent transactions

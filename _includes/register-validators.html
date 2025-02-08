@@ -1,0 +1,95 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users Table</title>
+    <script>
+	document.addEventListener("DOMContentLoaded", async () => {
+		const tableBody = document.getElementById("usersTableBody");
+
+		try {
+			const response = await fetch("https://choucoin-posts-4f7c7496eb49.herokuapp.com/get-users");
+			const users = await response.json();
+
+			users.forEach(user => {
+				const row = document.createElement("tr");
+
+				// user_id Cell
+				const usernameCell = document.createElement("td");
+				usernameCell.textContent = user.user_id;
+
+				// Register Button Cell
+				const buttonCell = document.createElement("td");
+				const registerButton = document.createElement("button");
+				registerButton.textContent = "Register";
+
+				// Store username and N in button attributes
+				registerButton.setAttribute("data-username", user.user_id);
+				registerButton.setAttribute("data-N", user.N);
+
+				registerButton.addEventListener('click', async () => {
+					// Prevent page reload (in case it's inside a form)
+					event.preventDefault();  // This will prevent the default button behavior (form submission)
+
+					const userId = registerButton.getAttribute('data-username');
+					const userKey = registerButton.getAttribute('data-N');
+					registerUser(userId, userKey);
+				});
+
+				buttonCell.appendChild(registerButton);
+
+				// N Cell
+				const pubKeyCell = document.createElement("td");
+				pubKeyCell.textContent = user.N
+
+				// Append all to row
+				row.appendChild(usernameCell);
+				row.appendChild(buttonCell);
+				row.appendChild(pubKeyCell);
+				tableBody.appendChild(row);
+			});
+		} catch (error) {
+			console.error("Error fetching users:", error);
+		}
+	});
+
+	// Function to Register User
+	async function registerUser(user_id, N) {
+		try {
+			const response = await fetch("https://choucoin-posts-4f7c7496eb49.herokuapp.com/register-validator", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ user_id, N })
+			});
+
+			const data = await response.json();
+			
+			if (response.ok) {
+				alert(`User ${user_id} registered successfully with index ${data.index}`);
+				location.reload(); // Refresh page to update table
+			} else {
+				alert(`Error: ${data.error}`);
+			}
+		} catch (error) {
+			console.error("Registration error:", error);
+			alert("Failed to register user.");
+		}
+	}
+	</script>
+</head>
+<body>
+    <h2>Users</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Action</th>
+				<th>Public Key</th>
+            </tr>
+        </thead>
+        <tbody id="usersTableBody">
+            <!-- Users will be inserted here -->
+        </tbody>
+    </table>
+</body>
+</html>
