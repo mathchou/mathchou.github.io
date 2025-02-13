@@ -5,45 +5,50 @@ let d = null
 let userId = null
 let selectedPosts = [];
 let selectedHash = null;
+let maxLength = 50;
 
 
-// File upload handler: Parse userId, N, and d from the uploaded file
-document.getElementById('fileInput').addEventListener('change', function(event) {
-    const file = event.target.files[0];
-    if (file && file.type === 'text/plain') {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const content = e.target.result;
-            const rows = content.split('\n').map(row => row.trim()); // Split by new line and trim extra spaces
-            const parsedVariables = {};
+// Only add event listeners if the element exists
+const fileInput = document.getElementById('fileInput');
+if (fileInput) {
+	// File upload handler: Parse userId, N, and d from the uploaded file
+	document.getElementById('fileInput').addEventListener('change', function(event) {
+		const file = event.target.files[0];
+		if (file && file.type === 'text/plain') {
+			const reader = new FileReader();
+			reader.onload = function (e) {
+				const content = e.target.result;
+				const rows = content.split('\n').map(row => row.trim()); // Split by new line and trim extra spaces
+				const parsedVariables = {};
 
-            // Parse the file content to extract variables
-            rows.forEach(row => {
-                if (row.includes('=')) {
-                    const [key, value] = row.split('=').map(part => part.trim());
-                    if (key && value) {
-                        // Use BigInt only for N and d
-                        parsedVariables[key] = (key === 'N' || key === 'd') ? BigInt(value) : value;
-                    }
-                }
-            });
+				// Parse the file content to extract variables
+				rows.forEach(row => {
+					if (row.includes('=')) {
+						const [key, value] = row.split('=').map(part => part.trim());
+						if (key && value) {
+							// Use BigInt only for N and d
+							parsedVariables[key] = (key === 'N' || key === 'd') ? BigInt(value) : value;
+						}
+					}
+				});
 
-            // Validate and assign N, d, and userId
-            if (parsedVariables['N'] && parsedVariables['d'] && parsedVariables['userId']) {
-                N = parsedVariables['N'];
-                d = parsedVariables['d'];
-                userId = parsedVariables['userId'];
-                alert("User ID, N, and d successfully loaded.");
-            } else {
-                alert("The uploaded file is invalid. Please ensure it contains 'N', 'd', and 'userId' in the correct format.");
-            }
-        };
+				// Validate and assign N, d, and userId
+				if (parsedVariables['N'] && parsedVariables['d'] && parsedVariables['userId']) {
+					N = parsedVariables['N'];
+					d = parsedVariables['d'];
+					userId = parsedVariables['userId'];
+					alert("User ID, N, and d successfully loaded.");
+				} else {
+					alert("The uploaded file is invalid. Please ensure it contains 'N', 'd', and 'userId' in the correct format.");
+				}
+			};
 
-        reader.readAsText(file);
-    } else {
-        alert('Please upload a valid .txt file.');
-    }
-});
+			reader.readAsText(file);
+		} else {
+			alert('Please upload a valid .txt file.');
+		}
+	});
+}
 
 
 // Modular exponentiation (a^b % c) using BigInt
@@ -113,287 +118,6 @@ async function signMessage(message, d, N) {
 
 
 
-async function fetchSingleUserFromBackend() {
-    try {
-        const response = await fetch(`${herokuBackendUrl}get-users`);
-        if (response.ok) {
-            return await response.json(); // Return the user data
-        } else {
-            console.error('Failed to fetch users:', await response.text());
-            return [];
-        }
-    } catch (err) {
-        console.error('Error fetching users:', err);
-        return [];
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-let allTransactions = [];
-let groupedTransactions = [];
-let currentPage = 0;
-
-async function fetchAndDisplayTransactions() {
-    try {
-        const response = await fetch(`${herokuBackendUrl}get-transactions`);
-        if (!response.ok) {
-            throw new Error(`Error fetching transactions: ${response.status}`);
-        }
-
-        allTransactions = await response.json();
-        console.log("Fetched Transactions:", allTransactions);
-
-        // Sort transactions by date (newest first)
-        allTransactions.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
-        console.log("Sorted Transactions:", allTransactions);
-
-        // Group transactions by week (starting Tuesday 12 AM)
-        groupedTransactions = groupTransactionsByWeek(allTransactions);
-        console.log("Grouped Transactions:", groupedTransactions);
-
-        // Display the first page (most recent week)
-        displayTransactions(currentPage);
-    } catch (error) {
-        console.error('Error fetching transactions:', error);
-        document.getElementById('transactionsContainer').innerHTML = `<p>Error: ${error.message}</p>`;
-    }
-}
-
-// Function to get the Tuesday 12 AM of a given date
-function getTuesdayMidnight(date) {
-    const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    const daysSinceTuesday = (dayOfWeek + 6) % 7; // Distance from Tuesday
-    const tuesdayMidnight = new Date(date);
-    tuesdayMidnight.setDate(date.getDate() - daysSinceTuesday);
-    tuesdayMidnight.setHours(0, 0, 0, 0);
-    return tuesdayMidnight;
-}
-
-// Function to group transactions by the week they belong to
-function groupTransactionsByWeek(transactions) {
-    const weeks = new Map();
-
-    transactions.forEach(tx => {
-        const txDate = new Date(tx.datetime);
-        if (isNaN(txDate)) {
-            console.error("Invalid Date Found:", tx);
-            return;
-        }
-
-        const weekStart = getTuesdayMidnight(txDate).getTime();
-        if (!weeks.has(weekStart)) {
-            weeks.set(weekStart, []);
-        }
-        weeks.get(weekStart).push(tx);
-    });
-
-    // Convert Map to sorted array (newest weeks first)
-    return Array.from(weeks.entries())
-        .sort((a, b) => b[0] - a[0])
-        .map(entry => entry[1]);
-}
-
-// Function to display transactions of the current page
-function displayTransactions(page) {
-    const transactionsContainer = document.getElementById('transactionsContainer');
-    transactionsContainer.innerHTML = '';
-
-    if (groupedTransactions.length === 0 || !groupedTransactions[page]) {
-        transactionsContainer.innerHTML = '<p>No transactions found.</p>';
-        return;
-    }
-
-    console.log(`Displaying transactions for page ${page}:`, groupedTransactions[page]);
-
-    groupedTransactions[page].forEach(tx => {
-        const p = document.createElement('p');
-        p.textContent = `${tx.sender} sends ${tx.amount} Choucoin to ${tx.receiver} for ${tx.comment} on ${tx.datetime}`;
-        transactionsContainer.appendChild(p);
-    });
-
-    displayPaginationControls();
-}
-
-// Function to create pagination controls
-function displayPaginationControls() {
-    const paginationContainer = document.getElementById('paginationContainer');
-    paginationContainer.innerHTML = '';
-
-    console.log("Pagination State:", { currentPage, totalPages: groupedTransactions.length });
-
-    if (groupedTransactions.length > 1) {
-        if (currentPage > 0) {
-            const prevButton = document.createElement('button');
-            prevButton.textContent = 'Previous Week';
-            prevButton.onclick = () => {
-                currentPage--;
-                displayTransactions(currentPage);
-            };
-            paginationContainer.appendChild(prevButton);
-        }
-
-        if (currentPage < groupedTransactions.length - 1) {
-            const nextButton = document.createElement('button');
-            nextButton.textContent = 'Next Week';
-            nextButton.onclick = () => {
-                currentPage++;
-                displayTransactions(currentPage);
-            };
-            paginationContainer.appendChild(nextButton);
-        }
-    }
-}
-
-// Call function to fetch and display transactions after the DOM is loaded
-document.addEventListener('DOMContentLoaded', fetchAndDisplayTransactions);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-async function loadPostsToVerifyIncludeDropdown() {
-    try {
-        const response = await fetch(`${herokuBackendUrl}get-transactions`);
-        if (!response.ok) {
-            throw new Error(`Failed to fetch transactions: ${response.status}`);
-        }
-
-        const transactions = await response.json();
-        const postsContainer = document.getElementById('postsContainer');
-        postsContainer.innerHTML = ''; // Clear existing posts
-
-        transactions.forEach(post => {
-            const postDiv = document.createElement('div');
-            postDiv.classList.add('post-item');
-            console.log('signature:', post.signedHash);
-
-            // Create the HTML structure for each post
-			postDiv.innerHTML = `
-				<table style="width: 100%;">
-					<tr>
-						<!-- Column for the verify button -->
-						<td style="border: 1px solid #ddd; padding: 5px; width: 90%; text-align: center; display: flex; align-items: center; gap: 5px;">
-							<button 
-								class="verify-btn" 
-								data-user-id="${post.sender}" 
-								data-post-sig="${post.signedHash}" 
-								data-user-pubkey="${post.publicKey}"
-								data-message="${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime.slice(0,19)}">
-								Verify Post
-							</button>
-							<!-- Block Inclusion Dropdown -->
-							<select class="block-dropdown"  data-user-id="${post.sender}" data-post-sig="${post.signedHash}">
-								<option value="" disabled selected>Select One</option>
-								<option value="include">Include in Block</option>
-								<option value="exclude">Do Not Include in Block</option>
-							</select>
-							<pre id="verification-text" class="output-box">Waiting to be verified...</pre>
-						</td>
-						<!-- Column for the message with scrolling enabled -->
-						<td style="border: 1px solid #ddd; padding: 5px; max-width: 300px; white-space: nowrap; overflow-x: auto;">
-							${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime}, signed: ${post.signedHash}
-						</td>
-					</tr>
-				</table>
-			`;
-
-            // Append the post to the container
-            postsContainer.appendChild(postDiv);
-
-            // Add event listener for the verify button
-            const verifyButton = postDiv.querySelector('.verify-btn');
-            const verificationText = postDiv.querySelector('#verification-text'); // Get the <pre> element
-
-            verifyButton.addEventListener('click', async () => {
-				// Prevent page reload (in case it's inside a form)
-				event.preventDefault();  // This will prevent the default button behavior (form submission)
-
-                const userId = verifyButton.getAttribute('data-user-id');
-                const sigId = verifyButton.getAttribute('data-post-sig');
-                const userKey = verifyButton.getAttribute('data-user-pubkey');
-				const message = verifyButton.getAttribute('data-message');
-
-				// Verify signature
-				const valid = await verifySignature(message, BigInt(sigId), BigInt(65537), BigInt(userKey)); 
-
-                // Compare the decrypted signature with the hash
-                if (valid) {
-                    // Update the <pre> element with success message
-                    verificationText.textContent = `Post verified successfully.`;
-                } else {
-                    // Update the <pre> element with failure message
-                    verificationText.textContent = `Failed to verify the post.`;
-                }
-            });
-
-            console.log('Verify Button:', verifyButton);
-			
-			// Add event listener for the block inclusion dropdown
-            const blockDropdown = postDiv.querySelector('.block-dropdown');
-            blockDropdown.addEventListener('change', () => {
-                const action = blockDropdown.value;
-
-                if (action === 'include') {
-                    // Add the transaction to the selectedPosts array if not already included
-                    if (!selectedPosts.some(p => p._id === post._id)) {
-                        selectedPosts.push(post);
-                    }
-                } else if (action === 'exclude') {
-                    // Remove the transaction from the selectedPosts array
-                    selectedPosts = selectedPosts.filter(p => p._id !== post._id);
-                }
-
-                // Sort selectedPosts by datetime (most recent to least recent)
-                selectedPosts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-                console.log('Selected Posts (sorted):', selectedPosts);
-            });
-        });
-    } catch (error) {
-        console.error('Error loading posts:', error);
-    }
-}
-
-
 async function verifySignature(message, signature, e, N) {
     // Step 1: Hash and pad the message with SHA-256 similar to how it was done in signMessage()
     const messageHash = await sha256(message);
@@ -417,6 +141,244 @@ async function verifySignature(message, signature, e, N) {
 	
     return decryptedMessageHashBigInt === paddedMessageBigInt;
 }
+
+
+// Functions to display paginated transactions by week
+
+
+let weekRanges = []; // Array to store the week ranges
+let allPosts = [];
+let groupedPosts = [];
+let currentPage = 0;
+
+async function loadPostsToVerifyIncludeDropdown() {
+    try {
+        const response = await fetch(`${herokuBackendUrl}get-transactions`);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch transactions: ${response.status}`);
+        }
+
+        allPosts = await response.json();
+        console.log("Fetched Posts:", allPosts);
+
+        // Sort posts by date (newest first)
+        allPosts.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+        console.log("Sorted Posts:", allPosts);
+
+        // Group posts by week (starting Tuesday 12 AM)
+        groupedPosts = groupPostsByWeek(allPosts);
+        console.log("Grouped Posts:", groupedPosts);
+
+        // Display the first page (most recent week)
+        displayPosts(currentPage);
+    } catch (error) {
+        console.error('Error loading posts:', error);
+    }
+}
+
+
+// Helper function to get the start of the week (Tuesday)
+function getStartOfWeek(date) {
+    const dayOfWeek = date.getDay();
+    const diffToTuesday = (dayOfWeek >= 2 ? dayOfWeek - 2 : 7 - (2 - dayOfWeek));
+    const weekStart = new Date(date);
+    weekStart.setDate(date.getDate() - diffToTuesday);
+    weekStart.setHours(0, 0, 0, 0); // Set to 12:00 AM
+    return weekStart;
+}
+
+// Function to get the Tuesday 12 AM of a given date
+function getTuesdayMidnight(date) {
+    const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const daysSinceTuesday = (dayOfWeek + 6) % 7; // Distance from Tuesday
+    const tuesdayMidnight = new Date(date);
+    tuesdayMidnight.setDate(date.getDate() - daysSinceTuesday);
+    tuesdayMidnight.setHours(0, 0, 0, 0);
+    return tuesdayMidnight;
+}
+
+// Function to group posts by the week they belong to
+function groupPostsByWeek(posts) {
+    const weeks = new Map();
+
+    posts.forEach(post => {
+        const postDate = new Date(post.datetime);
+        if (isNaN(postDate)) {
+            console.error("Invalid Date Found:", post);
+            return;
+        }
+		
+        const weekStart = getStartOfWeek(postDate);
+        const weekStart_alt = getTuesdayMidnight(postDate).getTime();
+        if (!weeks.has(weekStart_alt)) {
+            weeks.set(weekStart_alt, []);
+            weekRanges.push({ start: weekStart, end: weekStart.getDate() + 6 }); // Add the range			
+        }
+        weeks.get(weekStart_alt).push(post);
+    });
+
+    // Convert Map to sorted array (newest weeks first)
+    return Array.from(weeks.entries())
+        .sort((a, b) => b[0] - a[0])
+        .map(entry => entry[1]);
+}
+
+
+function displayPosts(page) {
+    const postsContainer = document.getElementById('postsContainer');
+    postsContainer.innerHTML = '';
+
+    if (groupedPosts.length === 0 || !groupedPosts[page]) {
+        postsContainer.innerHTML = '<p>No posts found.</p>';
+        return;
+    }
+
+    // Get start and end dates for the current week
+    const weekStart = new Date(weekRanges[page]['start']);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6); // End of the week
+
+    // Format dates as readable strings (e.g., "Feb 6, 2024")
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    const weekStartStr = weekStart.toLocaleDateString(weekRanges[page]['start'], options);
+    const weekEndStr = weekEnd.toLocaleDateString(weekRanges[page]['end'], options);
+
+    // Add a header displaying the date range
+    const header = document.createElement('h3');
+    header.textContent = `Showing posts from week of ${weekStartStr} - ${weekEndStr}`;
+    postsContainer.appendChild(header);
+
+    console.log(`Displaying posts for page ${page} (${weekStartStr} - ${weekEndStr}):`, groupedPosts[page]);
+
+    groupedPosts[page].forEach(post => {
+        const postDiv = document.createElement('div');
+        postDiv.classList.add('post-item');
+
+        postDiv.innerHTML = `
+            <table style="width: 100%;">
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 5px; width: 90%; text-align: center; display: flex; align-items: center; gap: 5px;">
+                        <button 
+                            class="verify-btn" 
+                            data-user-id="${post.sender}" 
+                            data-post-sig="${post.signedHash}" 
+                            data-user-pubkey="${post.publicKey}"
+                            data-message="${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime.slice(0,19)}">
+                            Verify Post
+                        </button>
+						<!-- Block Inclusion Dropdown -->
+						<select class="block-dropdown"  data-user-id="${post.sender}" data-post-sig="${post.signedHash}">
+							<option value="" disabled selected>Select One</option>
+							<option value="include">Include in Block</option>
+							<option value="exclude">Do Not Include in Block</option>
+						</select>
+                        <pre class="output-box">Waiting to be verified...</pre>
+                    </td>
+                    <td style="border: 1px solid #ddd; padding: 5px; max-width: 300px; white-space: nowrap; overflow-x: auto;">
+                        ${post.sender} sends ${post.amount} Choucoin to ${post.receiver} for ${post.comment} on ${post.datetime}, signed: ${post.signedHash}
+                    </td>
+                </tr>
+            </table>
+        `;
+
+        postsContainer.appendChild(postDiv);
+
+        // Add event listener for the verify button
+        const verifyButton = postDiv.querySelector('.verify-btn');
+        const verificationText = postDiv.querySelector('.output-box');
+
+        verifyButton.addEventListener('click', async (event) => {
+            event.preventDefault();
+
+            const userId = verifyButton.getAttribute('data-user-id');
+            const sigId = verifyButton.getAttribute('data-post-sig');
+            const userKey = verifyButton.getAttribute('data-user-pubkey');
+            const message = verifyButton.getAttribute('data-message');
+
+            // Verify signature
+            const valid = await verifySignature(message, BigInt(sigId), BigInt(65537), BigInt(userKey));
+
+            if (valid) {
+                verificationText.textContent = `Post verified successfully.`;
+            } else {
+                verificationText.textContent = `Failed to verify the post.`;
+            }
+        });
+		
+				// Add event listener for the block inclusion dropdown
+		const blockDropdown = postDiv.querySelector('.block-dropdown');
+		blockDropdown.addEventListener('change', () => {
+			const action = blockDropdown.value;
+
+			if (action === 'include') {
+				// Add the transaction to the selectedPosts array if not already included
+				if (!selectedPosts.some(p => p._id === post._id)) {
+					selectedPosts.push(post);
+				}
+			} else if (action === 'exclude') {
+				// Remove the transaction from the selectedPosts array
+				selectedPosts = selectedPosts.filter(p => p._id !== post._id);
+			}
+
+			// Sort selectedPosts by datetime (most recent to least recent)
+			selectedPosts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+			console.log('Selected Posts (sorted):', selectedPosts);
+		});
+    });
+
+    displayPaginationControls();
+}
+
+// Function to create pagination controls
+function displayPaginationControls() {
+    const paginationContainer = document.getElementById('paginationContainer');
+    paginationContainer.innerHTML = '';
+
+    console.log("Pagination State:", { currentPage, totalPages: groupedPosts.length });
+
+    if (groupedPosts.length > 1) {
+        if (currentPage > 0) {
+            const prevButton = document.createElement('button');
+            prevButton.textContent = 'Next Week';
+            prevButton.onclick = () => {
+                currentPage--;
+                displayPosts(currentPage);
+            };
+            paginationContainer.appendChild(prevButton);
+        }
+
+        if (currentPage < groupedPosts.length - 1) {
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'Previous Week';
+            nextButton.onclick = () => {
+                currentPage++;
+                displayPosts(currentPage);
+            };
+            paginationContainer.appendChild(nextButton);
+        }
+    }
+}
+
+
+
+
+async function fetchSingleUserFromBackend() {
+    try {
+        const response = await fetch(`${herokuBackendUrl}get-users`);
+        if (response.ok) {
+            return await response.json(); // Return the user data
+        } else {
+            console.error('Failed to fetch users:', await response.text());
+            return [];
+        }
+    } catch (err) {
+        console.error('Error fetching users:', err);
+        return [];
+    }
+}
+
+
 
 
 async function loadPostsToVerify() {
@@ -615,96 +577,185 @@ async function submitBlock(block) {
     }
 }
 		
-		
+let recentBlocks = [];
 
-document.addEventListener('DOMContentLoaded', () => {
-    fetch(`${herokuBackendUrl}api/recent-blocks`)
-        .then(response => response.json())
-        .then(blocks => {
-            const tableBody = document.querySelector('#blocksTable tbody');
+function fetchRecentBlocks(limit=10) {
+	fetch(`${herokuBackendUrl}api/recent-blocks?limit=${limit}`)
+		.then(response => response.json())
+		.then(blocks => {
+			
+			// Sort blocks from most recent to oldest based on 'timeOfCreation'
+			blocks.sort((a, b) => new Date(b.timeOfCreation) - new Date(a.timeOfCreation));
+			recentBlocks = blocks;
+			const tableBody = document.querySelector('#blocksTable tbody');
 
-            blocks.forEach(block => {
-                const row = document.createElement('tr');
+			blocks.forEach((block, index) => {
+				const row = document.createElement('tr');
 
-                // Time Submitted (Formatted)
-                const timeSubmitted = new Date(block.timeOfCreation).toLocaleString();
-                const timeCell = document.createElement('td');
-                timeCell.textContent = timeSubmitted;
-                row.appendChild(timeCell);
+				// Time Submitted (Formatted)
+				const timeSubmitted = new Date(block.timeOfCreation).toLocaleString();
+				const timeCell = document.createElement('td');
+				timeCell.textContent = timeSubmitted;
+				row.appendChild(timeCell);
 
-                // Signed Block Hash (First 10 characters + "..." and click to copy full hash)
-                const blockHashCell = document.createElement('td');
-                const fullHash = block.signedBlockHash || ''; // Full signed block hash
-                const shortHash = fullHash.slice(0, 10); // First 10 characters
-                const truncatedHash = `${shortHash}...`; // Add "..." at the end
+				// Signed Block Hash (First 10 characters + "..." and click to copy full hash)
+				const blockHashCell = document.createElement('td');
+				const fullHash = block.signedBlockHash || ''; // Full signed block hash
+				const shortHash = fullHash.slice(0, 10); // First 10 characters
+				const truncatedHash = `${shortHash}...`; // Add "..." at the end
 
-                const blockHashText = document.createElement('span');
-                blockHashText.textContent = truncatedHash;
-                blockHashText.style.cursor = 'pointer';  // Make it look clickable
-                blockHashText.addEventListener('click', () => {
-                    // Copy full hash to clipboard when clicked
-                    navigator.clipboard.writeText(fullHash).then(() => {
-                        alert('Signed block hash copied to clipboard!');
-                    }).catch(err => {
-                        console.error('Error copying to clipboard:', err);
-                    });
-                });
+				const blockHashText = document.createElement('span');
+				blockHashText.textContent = truncatedHash;
+				blockHashText.style.cursor = 'pointer';  // Make it look clickable
+				blockHashText.addEventListener('click', () => {
+					// Copy full hash to clipboard when clicked
+					navigator.clipboard.writeText(fullHash).then(() => {
+						alert('Signed block hash copied to clipboard!');
+					}).catch(err => {
+						console.error('Error copying to clipboard:', err);
+					});
+				});
 
-                blockHashCell.appendChild(blockHashText);
-                row.appendChild(blockHashCell);
+				blockHashCell.appendChild(blockHashText);
+				row.appendChild(blockHashCell);
 
-                // Publisher Name
-                const publisherCell = document.createElement('td');
-                publisherCell.textContent = block.publisherName || 'N/A';
-                row.appendChild(publisherCell);
+				// Publisher Name
+				const publisherCell = document.createElement('td');
+				publisherCell.textContent = block.publisherName || 'N/A';
+				row.appendChild(publisherCell);
+				
+				// Transactions (display only sender, amount, receiver)
+				const transactionsCell = document.createElement('td');
+				const transactions = block.transactions || [];
+				transactionsCell.innerHTML = transactions.map(transaction => {
+					let transactionText =  `${transaction.sender} → ${transaction.receiver}: ${transaction.amount} CC`;
+					const maxLength = 40; // Set maxLength here
+                    return transactionText.length > maxLength ? 
+                        transactionText.slice(0, maxLength) + '...' : 
+                        transactionText;
+				}).join('<br>');
+				row.appendChild(transactionsCell);
 
-                // Transactions (display only sender, amount, receiver)
-                const transactionsCell = document.createElement('td');
-                const transactions = block.transactions || [];
-                transactionsCell.innerHTML = transactions.map(transaction => {
-                    return `${transaction.sender} → ${transaction.receiver}: ${transaction.amount} CC`;
-                }).join('<br>');
-                row.appendChild(transactionsCell);
+				// Previous Block Hash (First 10 characters + "..." and click to copy full hash)
+				const prevBlockHashCell = document.createElement('td');
+				const prevFullHash = block.previousBlockHash || ''; // Full previous block hash
+				const prevShortHash = prevFullHash.slice(0, 10); // First 10 characters
+				const prevTruncatedHash = `${prevShortHash}...`; // Add "..." at the end
 
-                // Previous Block Hash (First 10 characters + "..." and click to copy full hash)
-                const prevBlockHashCell = document.createElement('td');
-                const prevFullHash = block.previousBlockHash || ''; // Full previous block hash
-                const prevShortHash = prevFullHash.slice(0, 10); // First 10 characters
-                const prevTruncatedHash = `${prevShortHash}...`; // Add "..." at the end
+				const prevBlockHashText = document.createElement('span');
+				prevBlockHashText.textContent = prevTruncatedHash;
+				prevBlockHashText.style.cursor = 'pointer';  // Make it look clickable
+				prevBlockHashText.addEventListener('click', () => {
+					// Copy full previous block hash to clipboard when clicked
+					navigator.clipboard.writeText(prevFullHash).then(() => {
+						alert('Previous block hash copied to clipboard!');
+					}).catch(err => {
+						console.error('Error copying to clipboard:', err);
+					});
+				});
 
-                const prevBlockHashText = document.createElement('span');
-                prevBlockHashText.textContent = prevTruncatedHash;
-                prevBlockHashText.style.cursor = 'pointer';  // Make it look clickable
-                prevBlockHashText.addEventListener('click', () => {
-                    // Copy full previous block hash to clipboard when clicked
-                    navigator.clipboard.writeText(prevFullHash).then(() => {
-                        alert('Previous block hash copied to clipboard!');
-                    }).catch(err => {
-                        console.error('Error copying to clipboard:', err);
-                    });
-                });
+				prevBlockHashCell.appendChild(prevBlockHashText);
+				row.appendChild(prevBlockHashCell);
 
-                prevBlockHashCell.appendChild(prevBlockHashText);
-                row.appendChild(prevBlockHashCell);
+				// Verifier's ID
+				const verifierCell = document.createElement('td');
+				verifierCell.textContent = block.verifierId || 'N/A';
+				row.appendChild(verifierCell);
+				
+				// Verify button
+				const buttonCell = document.createElement('td');
+				buttonCell.innerHTML = `<button onclick="verifyTransactions(${index})">Verify Transactions</button>`;
+				row.appendChild(buttonCell);
 
-                // Verifier's ID
-                const verifierCell = document.createElement('td');
-                verifierCell.textContent = block.verifierId || 'N/A';
-                row.appendChild(verifierCell);
+				// Append row to table
+				tableBody.appendChild(row);
+			});
+		})
+		.catch(err => {
+			console.error('Error fetching blocks:', err);
+		});
+};
 
-                // Append row to table
-                tableBody.appendChild(row);
+document.addEventListener('DOMContentLoaded', fetchRecentBlocks)
+
+
+
+
+
+
+// Place-holder functions need to be replaced:
+
+////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+function verifyTransactions(blockIndex) {
+            const block = recentBlocks[blockIndex];
+
+            block.transactions.forEach(transaction => {
+				let transactionText = `${transaction.sender} → ${transaction.receiver}: ${transaction.amount} CC`;
+				if (transactionText.length > maxLength) { 
+					transactionText = transactionText.slice(0, maxLength) + '...' 
+					}
+			
+			
+                if (verifySignaturePLACEHOLDER(transaction.senderPublicKey, transaction)) {
+                    alert(`${transactionText} verified successfully!`);
+                } else {
+                    alert(`Verification failed for ${transactionText}.`);
+                }
             });
-        })
-        .catch(err => {
-            console.error('Error fetching blocks:', err);
-        });
-});
+        }
+
+function verifySignaturePLACEHOLDER(publicKey, transaction) {
+	// Simulate verification (replace with real cryptographic verification)
+	return publicKey && transaction.amount > 0;
+}
+
+function copyToClipboard(text) {
+	navigator.clipboard.writeText(text).then(() => {
+		alert('Copied to clipboard!');
+	}).catch(err => console.error('Error copying:', err));
+}
+
+function addVerifier() {
+	const fileInput = document.getElementById('verifierFile');
+	if (fileInput.files.length === 0) {
+		alert('Please upload a verification ID file.');
+		return;
+	}
+
+	const reader = new FileReader();
+	reader.onload = function(event) {
+		const verifierData = event.target.result.trim();
+		updateBlockWithVerifier(verifierData);
+	};
+	reader.readAsText(fileInput.files[0]);
+}
+
+function updateBlockWithVerifier(verifierData) {
+	fetch('/api/add-verifier', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ verifier: verifierData })
+	})
+	.then(response => response.json())
+	.then(data => {
+		alert('Verifier added successfully!');
+		fetchRecentBlocks(); // Refresh the block list
+	})
+	.catch(err => console.error('Error adding verifier:', err));
+}
 
 
-
-
-
-
+////////////////////////////////////////////////////////
 
 

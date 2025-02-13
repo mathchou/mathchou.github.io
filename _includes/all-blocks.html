@@ -1,0 +1,72 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Choucoin Blocks</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 300px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -150px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+		<h1>All Blocks</h1>
+		
+    <table id="blocksTable">
+        <thead>
+            <tr>
+                <th>Time Submitted</th>
+                <th>Signed Block Hash</th>
+                <th>Publisher Name</th>
+                <th>Transactions</th>
+                <th>Previous Block Hash</th>
+                <th>Verifier's ID</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Block data will go here -->
+        </tbody>
+    </table>
+
+
+    <script src="./assets/js/verification-script.js"></script>
+
+
+
+</body>
+</html>

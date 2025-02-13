@@ -1,0 +1,57 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recent Blocks</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        button {
+            cursor: pointer;
+            padding: 5px 10px;
+            margin: 5px;
+        }
+		
+    </style>
+</head>
+<body>
+
+		<h1>Recent Blocks</h1>
+		
+    <table id="blocksTable">
+        <thead>
+            <tr>
+                <th>Time Submitted</th>
+                <th>Signed Block Hash</th>
+                <th>Publisher Name</th>
+                <th>Transactions</th>
+                <th>Previous Block Hash</th>
+                <th>Verifier's ID</th>
+				<th>Verify Transactions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Block data will go here -->
+        </tbody>
+    </table>
+
+    <h3>Upload Verification ID</h3>
+    <input type="file" id="verifierFile" accept=".txt">
+    <button onclick="addVerifier()">Add Verifier</button>
+
+    <script src="./assets/js/verification-script.js"></script>
+    <script></script>
+
+</body>
+</html>

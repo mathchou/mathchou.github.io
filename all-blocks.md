@@ -2,6 +2,6 @@
 layout: default
 ---
 
-{% include create-block.html %}
+{% include all-blocks.html %}
 
 [back](./choucoin.html)

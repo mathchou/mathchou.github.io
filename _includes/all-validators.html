@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transaction List</title>
+    <title>User and Validator List</title>
 <style>
 /* Style for the result container */
 #resultContainer {
@@ -72,6 +72,29 @@
 		<!-- Users will be inserted here -->
 	</tbody>
 </table>
+
+  <h1>Registered Users</h1>
+	<!-- Wrapper to make the table scrollable -->
+	<div id="table-wrapper" style="overflow-x: auto; width: 100%;">
+	  <table border="1" id="users-table" style="width: 100%;">
+		<thead>
+		  <tr>
+			<th>User ID</th>
+			<th>Public Key (N)</th>
+		  </tr>
+		</thead>
+		<tbody id="usersTableBody">
+		  <!-- User data will be dynamically inserted here -->
+		</tbody>
+	  </table>
+	</div>
+
+    <!-- Link to external JavaScript file -->
+    <script src="./assets/js/key-registration.js"></script>
+
+
+
+
 
 <script>
 document.addEventListener("DOMContentLoaded", async () => {

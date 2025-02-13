@@ -138,6 +138,7 @@
 	Use the table below to verify transactions here. You may select via drop-down to include them in the next block. Note that verification only checks the signature, you must check yourself for sufficient funds and double-spending.
 	
 	<h2>Previous Transactions</h2>
+	<div id="paginationContainer" style="margin-top: 10px;"></div>
 	<form id="postForm">
     <div id="postsContainer">
         <!-- Posts will be displayed here -->
@@ -164,7 +165,7 @@
 
 
 	    <h1>Preview Block</h1>
-		
+	
     <form id="blockForm">
         <label for="blockInput">Enter Block JSON:</label>
         <textarea id="blockInput" rows="5" cols="50" placeholder="Enter block data as JSON"></textarea>
