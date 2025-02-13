@@ -275,8 +275,70 @@ async function fetchAndDisplayTransactions() {
 
 
 
-// Call the function on page load
-fetchAndDisplayTransactions();
 
+// Function to fetch and display transactions since last Tuesday 12 AM
+async function fetchAndDisplayRecentTransactions() {
+    try {
+        // Fetch all transactions from the backend
+        const response = await fetch(`${herokuBackendUrl}get-transactions`);
+
+        // Check if the response is okay
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Error fetching transactions: ${errorData.error}`);
+        }
+
+        // Parse the response JSON
+        const transactions = await response.json();
+
+        // Check if transactions exist
+        if (!transactions || transactions.length === 0) {
+            document.getElementById('transactionsContainer').innerHTML = '<p>No transactions found.</p>';
+            return;
+        }
+
+        // Get the timestamp of the most recent Tuesday at 12 AM
+        function getLastTuesdayMidnight() {
+            const now = new Date();
+            const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+            const daysSinceTuesday = (dayOfWeek + 6) % 7; // Days since last Tuesday
+            const lastTuesday = new Date(now);
+            lastTuesday.setDate(now.getDate() - daysSinceTuesday);
+            lastTuesday.setHours(0, 0, 0, 0); // Set to 12 AM
+            return lastTuesday.getTime();
+        }
+
+        const lastTuesdayMidnight = getLastTuesdayMidnight();
+
+        // Filter transactions to only include those after last Tuesday 12 AM
+        const recentTransactions = transactions.filter(tx => {
+            const txDate = new Date(tx.datetime).getTime();
+            return txDate >= lastTuesdayMidnight;
+        });
+
+        // Display transactions
+        const transactionsContainer = document.getElementById('transactionsContainer');
+        transactionsContainer.innerHTML = ''; // Clear the container
+
+        if (recentTransactions.length === 0) {
+            transactionsContainer.innerHTML = '<p>No recent transactions found.</p>';
+            return;
+        }
+
+        recentTransactions.forEach(tx => {
+            const p = document.createElement('p');
+            p.textContent = `${tx.sender} sends ${tx.amount} Choucoin to ${tx.receiver} for ${tx.comment} on ${tx.datetime}`;
+            transactionsContainer.appendChild(p);
+        });
+    } catch (error) {
+        console.error('Error fetching transactions:', error);
+        document.getElementById('transactionsContainer').innerHTML = `<p>Error: ${error.message}</p>`;
+    }
+}
+
+
+
+// Call the function on page load
+fetchAndDisplayRecentTransactions();
 
 

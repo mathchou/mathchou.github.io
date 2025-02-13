@@ -128,6 +128,168 @@ async function fetchSingleUserFromBackend() {
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+let allTransactions = [];
+let groupedTransactions = [];
+let currentPage = 0;
+
+async function fetchAndDisplayTransactions() {
+    try {
+        const response = await fetch(`${herokuBackendUrl}get-transactions`);
+        if (!response.ok) {
+            throw new Error(`Error fetching transactions: ${response.status}`);
+        }
+
+        allTransactions = await response.json();
+        console.log("Fetched Transactions:", allTransactions);
+
+        // Sort transactions by date (newest first)
+        allTransactions.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+        console.log("Sorted Transactions:", allTransactions);
+
+        // Group transactions by week (starting Tuesday 12 AM)
+        groupedTransactions = groupTransactionsByWeek(allTransactions);
+        console.log("Grouped Transactions:", groupedTransactions);
+
+        // Display the first page (most recent week)
+        displayTransactions(currentPage);
+    } catch (error) {
+        console.error('Error fetching transactions:', error);
+        document.getElementById('transactionsContainer').innerHTML = `<p>Error: ${error.message}</p>`;
+    }
+}
+
+// Function to get the Tuesday 12 AM of a given date
+function getTuesdayMidnight(date) {
+    const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const daysSinceTuesday = (dayOfWeek + 6) % 7; // Distance from Tuesday
+    const tuesdayMidnight = new Date(date);
+    tuesdayMidnight.setDate(date.getDate() - daysSinceTuesday);
+    tuesdayMidnight.setHours(0, 0, 0, 0);
+    return tuesdayMidnight;
+}
+
+// Function to group transactions by the week they belong to
+function groupTransactionsByWeek(transactions) {
+    const weeks = new Map();
+
+    transactions.forEach(tx => {
+        const txDate = new Date(tx.datetime);
+        if (isNaN(txDate)) {
+            console.error("Invalid Date Found:", tx);
+            return;
+        }
+
+        const weekStart = getTuesdayMidnight(txDate).getTime();
+        if (!weeks.has(weekStart)) {
+            weeks.set(weekStart, []);
+        }
+        weeks.get(weekStart).push(tx);
+    });
+
+    // Convert Map to sorted array (newest weeks first)
+    return Array.from(weeks.entries())
+        .sort((a, b) => b[0] - a[0])
+        .map(entry => entry[1]);
+}
+
+// Function to display transactions of the current page
+function displayTransactions(page) {
+    const transactionsContainer = document.getElementById('transactionsContainer');
+    transactionsContainer.innerHTML = '';
+
+    if (groupedTransactions.length === 0 || !groupedTransactions[page]) {
+        transactionsContainer.innerHTML = '<p>No transactions found.</p>';
+        return;
+    }
+
+    console.log(`Displaying transactions for page ${page}:`, groupedTransactions[page]);
+
+    groupedTransactions[page].forEach(tx => {
+        const p = document.createElement('p');
+        p.textContent = `${tx.sender} sends ${tx.amount} Choucoin to ${tx.receiver} for ${tx.comment} on ${tx.datetime}`;
+        transactionsContainer.appendChild(p);
+    });
+
+    displayPaginationControls();
+}
+
+// Function to create pagination controls
+function displayPaginationControls() {
+    const paginationContainer = document.getElementById('paginationContainer');
+    paginationContainer.innerHTML = '';
+
+    console.log("Pagination State:", { currentPage, totalPages: groupedTransactions.length });
+
+    if (groupedTransactions.length > 1) {
+        if (currentPage > 0) {
+            const prevButton = document.createElement('button');
+            prevButton.textContent = 'Previous Week';
+            prevButton.onclick = () => {
+                currentPage--;
+                displayTransactions(currentPage);
+            };
+            paginationContainer.appendChild(prevButton);
+        }
+
+        if (currentPage < groupedTransactions.length - 1) {
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'Next Week';
+            nextButton.onclick = () => {
+                currentPage++;
+                displayTransactions(currentPage);
+            };
+            paginationContainer.appendChild(nextButton);
+        }
+    }
+}
+
+// Call function to fetch and display transactions after the DOM is loaded
+document.addEventListener('DOMContentLoaded', fetchAndDisplayTransactions);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 async function loadPostsToVerifyIncludeDropdown() {
     try {
         const response = await fetch(`${herokuBackendUrl}get-transactions`);

@@ -42,7 +42,7 @@ You will find tools to generate a public/private key pair on the [Choucoin&copy;
 
 ### Making a transaction
 
-All transactions should be posted on the class Canvas discussion board.
+All transactions should be posted via this website.
 
 You may make posts under a name there, but note that anyone can choose any name, so a transaction should not be trusted simply by name alone!
 
