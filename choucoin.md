@@ -24,14 +24,14 @@ layout: default
     - Verify the block contains only valid transactions
 	- Allot yourself your verification bonus
 	- Publish the verified block
-5. Choosing the next set of {publisher, validators}:
+5. [Block validating tool](./verify-blocks.html) - Choosing the next set of {publisher, validators}:
   - validator-candidates are assigned a number based on their sign-up order.
-  - based on the last digits of the previous block's signed hash, the next set of publisher and validators is determined.
-    - For example: the previous block's signed hash is "106468293798347623498672348"
+  - based on the begining digits of the previous block's signed hash, the next set of publisher and validators is determined.
+    - For example: the previous block's signed hash is "116468293798347623498672348"
 	- Suppose there are 10 people signed up as validators.
-	- The last digit '8' chooses the next publisher.
-	- The second to last digit '4'chooses one of the next validators.
-	- The third to last digit '3' chooses another validator.
+	- The first digit '1' chooses the next publisher.
+	- The second digit '1'chooses one of the next validators, but since this is repeated, we skip it.
+	- The third digit '6' chooses the first validator.
 	- This process continues until at least one-third of the candidates are chosen to participate in the next block. So in the example with 10 people, this will continue until 1 publisher and 3 validators (4 total)
 	- Note:
 	  - we use enough digits in order to include all possible validator-candidates (e.g. for 42 candidates, we use 2-digits per selection)

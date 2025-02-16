@@ -487,8 +487,8 @@ async function fetchUserPublicKey(userID) {
 
 
 // generate bonus transaction of given value and type of bonus
-async function bonusTransaction(userId = userId, d = d, value, type) {
-	if (!userId || !d || !value || !type) {
+async function bonusTransaction(userId = userId, d = d, N=N, value, type) {
+	if (!userId || !d || !value || !type || !N) {
 		alert('missing variables detected');
 		return null;
 	}
@@ -535,7 +535,7 @@ async function createBlock(verifiedBy = []) {
         ]
     };
 	// add bonus transaction value 2
-	let bonus = await bonusTransaction(userId, d, 2, "block creation");
+	let bonus = await bonusTransaction(userId, d, N, 2, "block creation");
 	selectedPosts.push(bonus);
 	block.publisherName = userId;
 	block.publisherKey = N.toString();
@@ -627,13 +627,14 @@ function fetchRecentBlocks(limit=10) {
 				// Transactions (display only sender, amount, receiver)
 				const transactionsCell = document.createElement('td');
 				const transactions = block.transactions || [];
-				transactionsCell.innerHTML = transactions.map(transaction => {
-					let transactionText =  `${transaction.sender} → ${transaction.receiver}: ${transaction.amount} CC`;
-					const maxLength = 40; // Set maxLength here
-                    return transactionText.length > maxLength ? 
-                        transactionText.slice(0, maxLength) + '...' : 
-                        transactionText;
-				}).join('<br>');
+				transactionsCell.innerHTML = transactions.map((transaction, tindex) => {
+					let transactionText = `${transaction.sender} → ${transaction.receiver}: ${transaction.amount} CC`;
+					const maxLength = 40;
+					if (transactionText.length > maxLength) {
+						transactionText = transactionText.slice(0, maxLength) + '...';
+					}
+					return `<div id="transaction-${index}-${tindex}" class="transaction-entry">${transactionText}</div>`;
+				}).join('');
 				row.appendChild(transactionsCell);
 
 				// Previous Block Hash (First 10 characters + "..." and click to copy full hash)
@@ -659,7 +660,16 @@ function fetchRecentBlocks(limit=10) {
 
 				// Verifier's ID
 				const verifierCell = document.createElement('td');
-				verifierCell.textContent = block.verifierId || 'N/A';
+
+				if (block.blockVerifiers && Array.isArray(block.blockVerifiers)) {
+					verifierCell.innerHTML = block.blockVerifiers.map(verifier => 
+						`${verifier.verifierId}: ${verifier.verifierSignature.slice(0, 9)}...`
+					).join('<br>') || 'N/A';
+				} else {
+					verifierCell.textContent = 'N/A';
+				}
+
+
 				row.appendChild(verifierCell);
 				
 				// Verify button
@@ -678,83 +688,152 @@ function fetchRecentBlocks(limit=10) {
 
 document.addEventListener('DOMContentLoaded', fetchRecentBlocks)
 
+async function addTransaction(signedBlockHash, newTransaction) {
+    try {
+        const response = await fetch(`${herokuBackendUrl}update-block/hash/${signedBlockHash}/transactions`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ transaction: newTransaction }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message);
+
+        console.log('Transaction added:', data);
+        return data;
+    } catch (error) {
+        console.error('Error adding transaction:', error);
+    }
+}
 
 
+async function addBlockVerifier(signedBlockHash, newVerifier) {
+    try {
+        const response = await fetch(`${herokuBackendUrl}update-block/hash/${signedBlockHash}/verifiers`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ verifier: newVerifier }),
+        });
 
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message);
 
-
-// Place-holder functions need to be replaced:
-
-////////////////////////////////////////////////////////
-
-
-
-
-
-
-
-
+        console.log('Block verifier added:', data);
+        return data;
+    } catch (error) {
+        console.error('Error adding block verifier:', error);
+    }
+}
 
 
 
 function verifyTransactions(blockIndex) {
-            const block = recentBlocks[blockIndex];
+    const block = recentBlocks[blockIndex];
 
-            block.transactions.forEach(transaction => {
-				let transactionText = `${transaction.sender} → ${transaction.receiver}: ${transaction.amount} CC`;
-				if (transactionText.length > maxLength) { 
-					transactionText = transactionText.slice(0, maxLength) + '...' 
-					}
-			
-			
-                if (verifySignaturePLACEHOLDER(transaction.senderPublicKey, transaction)) {
-                    alert(`${transactionText} verified successfully!`);
-                } else {
-                    alert(`Verification failed for ${transactionText}.`);
-                }
-            });
+    block.transactions.forEach((transaction, index) => {
+        const messageInput = `${transaction.sender} sends ${transaction.amount} Choucoin to ${transaction.receiver} for ${transaction.comment} on ${transaction.datetime}`;
+        
+        // Select the corresponding transaction element
+        const transactionElement = document.querySelector(`#transaction-${blockIndex}-${index}`);
+
+        if (transactionElement) { // Ensure element exists before modifying it
+            if (verifySignature(messageInput, transaction.signedHash, 65537, transaction.publicKey)) {
+                transactionElement.style.backgroundColor = "lightgreen";
+            } else {
+                transactionElement.style.backgroundColor = "lightred";
+            }
+        }
+    });
+}
+
+async function addVerifier() {
+    let fileInput = document.getElementById('verifierFile');
+    let file = fileInput.files[0];
+
+    if (!file || file.type !== 'text/plain') {
+        alert('Please upload a valid .txt file.');
+        return;
+    }
+
+    try {
+        const parsedVariables = await readVerifierFile(file);
+
+        if (!parsedVariables.N || !parsedVariables.d || !parsedVariables.userId) {
+            alert("The uploaded file is invalid. Please ensure it contains 'N', 'd', and 'userId' in the correct format.");
+            return;
         }
 
-function verifySignaturePLACEHOLDER(publicKey, transaction) {
-	// Simulate verification (replace with real cryptographic verification)
-	return publicKey && transaction.amount > 0;
+        const N = parsedVariables.N;
+        const d = parsedVariables.d;
+        const userId = parsedVariables.userId;
+
+        console.log("Loaded Verifier Data:", { N, d, userId });
+
+        let selectedHash = document.getElementById('blockHashInput').value;
+        if (!selectedHash) {
+            alert('Please input the hash of the block you would like to verify.');
+            return;
+        }
+
+        const block = recentBlocks.find(block => block.signedBlockHash === selectedHash);
+        if (!block) {
+            alert('Block not found.');
+            return;
+        }
+
+        console.log("Verifier Info Before Signing:", { N, userId, d });
+		const hashInput = JSON.stringify(block); // hash will contain everything prior to the new bonus transaction and signature.
+        const verifierSig = (await signMessage(hashInput, d, N)).toString();
+		const verifierArray = {
+            verifierId: userId,
+            verifierKey: N.toString(),
+            verifierSignature: verifierSig
+        };
+		
+		await addBlockVerifier(selectedHash, verifierArray);
+
+		await addTransaction(selectedHash, await bonusTransaction(userId, d, N, 1, 'block verification'));
+		
+		alert("Refresh Page to see if your name has been added as a verifier and your bounty has been added.");
+
+    } catch (error) {
+        console.error("Error processing verifier file:", error);
+        alert("An error occurred while processing the verifier file.");
+    }
 }
 
-function copyToClipboard(text) {
-	navigator.clipboard.writeText(text).then(() => {
-		alert('Copied to clipboard!');
-	}).catch(err => console.error('Error copying:', err));
+// Helper function to read and parse the verifier file
+function readVerifierFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const content = e.target.result;
+            const rows = content.split('\n').map(row => row.trim());
+            const parsedVariables = {};
+
+            rows.forEach(row => {
+                if (row.includes('=')) {
+                    const [key, value] = row.split('=').map(part => part.trim());
+                    if (key && value) {
+                        parsedVariables[key] = (key === 'N' || key === 'd') ? BigInt(value) : value;
+                    }
+                }
+            });
+
+            resolve(parsedVariables);
+        };
+
+        reader.onerror = function (error) {
+            reject(error);
+        };
+
+        reader.readAsText(file);
+    });
 }
-
-function addVerifier() {
-	const fileInput = document.getElementById('verifierFile');
-	if (fileInput.files.length === 0) {
-		alert('Please upload a verification ID file.');
-		return;
-	}
-
-	const reader = new FileReader();
-	reader.onload = function(event) {
-		const verifierData = event.target.result.trim();
-		updateBlockWithVerifier(verifierData);
-	};
-	reader.readAsText(fileInput.files[0]);
-}
-
-function updateBlockWithVerifier(verifierData) {
-	fetch('/api/add-verifier', {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ verifier: verifierData })
-	})
-	.then(response => response.json())
-	.then(data => {
-		alert('Verifier added successfully!');
-		fetchRecentBlocks(); // Refresh the block list
-	})
-	.catch(err => console.error('Error adding verifier:', err));
-}
-
 
 ////////////////////////////////////////////////////////
 

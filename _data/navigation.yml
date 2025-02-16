@@ -10,6 +10,8 @@ main:
         url: "/send-choucoin"
       - title: "Block creation"
         url: "/create-block"
+      - title: "Block validation"
+        url: "/verify-blocks"
       - title: "All transactions"
         url: "/all-transactions"
       - title: "All blocks"
