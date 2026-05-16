@@ -19,6 +19,8 @@ Hi all, if you're here, no doubt you're interested in obtaining and trading the 
 
 This revolutionary cryptocurrency is poised to _revolutionize_ how goods and services are traded all around the world. 
 
+If you are looking for Dax's website, please follow this link: [Dax's Website](./dax.html)
+
 ### What is Choucoin&copy;?
 
 I just told you! It's the future! What do you mean? What's a cryptocurrency? C'mon everybody knows that a cryptocurrency is. You know, it's the blockchain and the stuff with the numbers and computers. Also, security, because... you know... it is called *crypto*currency, so obviously cryptography is making it secure and stuff. Anyways, dumb question. Let's move on.
