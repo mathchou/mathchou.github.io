@@ -11,7 +11,7 @@ The Wermosphere is a newly discovered layer of the atmosphere. It sits below the
 
 Here is an illustration of the Wermosphere:
 
-<img src="20260516_104747.jpg" alt="Wermosphere" width="300"/>
+<img src="20260516_104747.jpg" alt="Wermosphere" width="600"/>
 
 It was discovered by a boy named Dax on May 16th, 2026.
 
@@ -19,4 +19,4 @@ It was discovered by a boy named Dax on May 16th, 2026.
 
 Perspective:
 
-<img src="20260516_104406.jpg" alt="Perspective" width="300"/>
+<img src="20260516_104406.jpg" alt="Perspective" width="600"/>
