@@ -7,7 +7,7 @@ title: Dax's Website
 
 ### The Wermosphere
 
-The Wermosphere is a newly discovered layer of the atmosphere. It sits below the tree line and protects us from getting a sunburn. It also helps us to not get too hot by blocking the sun's rays.
+The Wermosphere is a newly discovered layer of the atmosphere. It sits below the tree line and protects us from the sun's invisible light.
 
 Here is an illustration of the Wermosphere:
 
@@ -20,3 +20,28 @@ It was discovered by a boy named Dax on May 16th, 2026.
 Perspective:
 
 <img src="20260516_104406.jpg" alt="Perspective" width="600"/>
+
+### Cupcake World by Dax Karker-Chou
+
+<img src="assets/pictures/cupcake_world_cover.jpg" width="300"/>
+
+<img src="assets/pictures/cupcake_world_1.jpg" width="600"/>
+
+<img src="assets/pictures/cupcake_world_2.jpg" width="600"/>
+
+<img src="assets/pictures/cupcake_world_3.jpg" width="600"/>
+
+<img src="assets/pictures/cupcake_world_4.jpg" width="600"/>
+
+<img src="assets/pictures/cupcake_world_5.jpg" width="600"/>
+
+<img src="assets/pictures/cupcake_world_6.jpg" width="600"/>
+
+<img src="assets/pictures/cupcake_world_7.jpg" width="600"/>
+
+
+
+
+
+
+
