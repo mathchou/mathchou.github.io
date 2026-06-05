@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Cupcake World</title>
+
+<!-- PageFlip library (CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
+
+<style>
+body {
+    margin: 0;
+    background: #eee;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* Book container */
+#book {
+    margin: auto;
+}
+
+/* Each page */
+.page {
+    background: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+/* Make images fit nicely regardless of dimensions */
+.page img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+</style>
+</head>
+
+<body>
+
+<div id="book">
+    <div class="page"><img src="assets/pictures/cupcake_world_cover.jpg"></div>
+    <div class="page"><img src="assets/pictures/cupcake_world_1.jpg"></div>
+    <div class="page"><img src="assets/pictures/cupcake_world_2.jpg"></div>
+    <div class="page"><img src="assets/pictures/cupcake_world_3.jpg"></div>
+    <div class="page"><img src="assets/pictures/cupcake_world_4.jpg"></div>
+    <div class="page"><img src="assets/pictures/cupcake_world_5.jpg"></div>
+    <div class="page"><img src="assets/pictures/cupcake_world_6.jpg"></div>
+    <div class="page"><img src="assets/pictures/cupcake_world_7.jpg"></div>
+</div>
+
+<script>
+const pageFlip = new St.PageFlip(document.getElementById("book"), {
+    width: 700,
+    height: 900,
+    size: "stretch",
+    minWidth: 315,
+    maxWidth: 1000,
+    minHeight: 420,
+    maxHeight: 1350,
+    showCover: true,
+    mobileScrollSupport: true,
+    useMouseEvents: true
+});
+
+pageFlip.loadFromHTML(document.querySelectorAll("#book .page"));
+</script>
+
+</body>
+</html>

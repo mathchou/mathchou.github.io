@@ -23,21 +23,12 @@ Perspective:
 
 ### Cupcake World by Dax Karker-Chou
 
-<img src="assets/pictures/cupcake_world_cover.jpg" width="300"/>
-
-<img src="assets/pictures/cupcake_world_1.jpg" width="600"/>
-
-<img src="assets/pictures/cupcake_world_2.jpg" width="600"/>
-
-<img src="assets/pictures/cupcake_world_3.jpg" width="600"/>
-
-<img src="assets/pictures/cupcake_world_4.jpg" width="600"/>
-
-<img src="assets/pictures/cupcake_world_5.jpg" width="600"/>
-
-<img src="assets/pictures/cupcake_world_6.jpg" width="600"/>
-
-<img src="assets/pictures/cupcake_world_7.jpg" width="600"/>
+<iframe
+    src="/storybook.html"
+    width="100%"
+    height="900"
+    style="border:none;">
+</iframe>
 
 
 
